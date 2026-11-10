@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0d0e10">
+  <meta name="description" content="LUNA login morph into Forma Connect home — interactive motion demo">
+  <title>LUNA → Forma Connect — Login Morph Demo</title>
+  <style>
+
+/* ===== LUNA LOGIN LAYER ===== */
+#login-screen {
+  --bg: #0e0f11;
+  --panel: #18191c;
+  --panel-border: #2e3035;
+  --subtle: #6a6d75;
+  --dim: #888b94;
+  --text: #eff0f3;
+  --white: #e6e7ec;
+  --ease: cubic-bezier(.22,1,.36,1);
+  position: fixed; inset: 0; z-index: 20;
+  display: flex; flex-direction: column;
+  min-height: 100svh; overflow: hidden;
+  background: var(--bg); color: var(--text);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Noto Sans KR", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: opacity .7s var(--ease), filter .7s var(--ease), transform .7s var(--ease);
+}
+#login-screen.is-exiting {
+  opacity: 0; filter: blur(10px); transform: scale(.985); pointer-events: none;
+}
+#login-screen[hidden] { display: none !important; }
+#login-screen *, #login-screen *::before, #login-screen *::after { box-sizing: border-box; }
+#login-screen button, #login-screen input { font: inherit; }
+#login-screen button { cursor: pointer; }
+#login-screen button:focus-visible, #login-screen a:focus-visible, #login-screen input:focus-visible {
+  outline: 2px solid #a5a8b1; outline-offset: 3px;
+}
+#login-screen .ambient {
+  position: absolute; inset: 0; z-index: -3; pointer-events: none;
+  background:
+    radial-gradient(ellipse 47% 41% at 50% 48%, rgba(46,49,58,.17), transparent 72%),
+    radial-gradient(ellipse 48% 55% at 68% 84%, rgba(32,34,42,.11), transparent 75%),
+    linear-gradient(180deg, #101113 0%, #0c0d0f 100%);
+}
+#login-screen .ambient::after {
+  content:""; position:absolute; inset:0; opacity:.14;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.76' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.19' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: screen;
+}
+#login-screen .ambient-grid {
+  position: absolute; inset: 0; z-index: -2; pointer-events:none;
+  background-image: linear-gradient(to right,rgba(150,156,170,.025) 1px,transparent 1px), linear-gradient(to bottom,rgba(150,156,170,.025) 1px,transparent 1px);
+  background-size: 88px 88px;
+  mask-image: radial-gradient(ellipse at 50% 45%,rgba(0,0,0,.65),transparent 75%);
+}
+#login-screen .site-header {
+  position:relative; z-index:10; display:flex; align-items:center; justify-content:space-between;
+  min-height:78px; padding: 0 clamp(24px,4vw,70px); flex:none;
+}
+#login-screen .brand { display:flex; align-items:center; gap:10px; color:inherit; text-decoration:none; user-select:none; }
+#login-screen .brand-icon { width:22px; height:22px; color: #d5d7df; }
+#login-screen .brand-name { font-size: 12px; letter-spacing:.2em; font-weight:760; }
+#login-screen .brand-divider { width:1px; height:13px; background:#42444a; margin:0 2px; }
+#login-screen .brand-connect { font-size: 8px; font-weight:650; letter-spacing:.21em; color:#686c75; }
+#login-screen .status { display:flex; align-items:center; gap:9px; color: #777a83; font-size:9px; font-weight:630; letter-spacing:.16em; }
+#login-screen .status-dot { position:relative; width:5px; height:5px; background:#b8bdc9; border-radius:50%; }
+#login-screen .status-dot::after {
+  content:""; position:absolute; inset:-5px; border:1px solid rgba(173,181,197,.4); border-radius:50%;
+  animation:lunaPing 3.2s ease-out infinite;
+}
+#login-screen .main {
+  position:relative; flex:1; min-height:0; display:grid; place-items:center; padding: 25px 20px 85px;
+}
+#login-screen .motion-scene { pointer-events:none; position:absolute; inset: 0; display:grid; place-items:center; overflow:hidden; z-index:-1; }
+#login-screen .scene-halo {
+  position:absolute; width: min(820px,95vw); height: min(820px,95vw); border-radius:50%;
+  background:radial-gradient(circle, rgba(85,90,103,.12) 0%, rgba(51,56,66,.065) 26%, transparent 62%);
+  filter:blur(16px); opacity:.9; animation:lunaHaloBreath 9s ease-in-out infinite;
+}
+#login-screen .orbit-stage { position:relative; width:750px; height:750px; flex:none; display:grid; place-items:center; opacity:.73; }
+#login-screen .orbital-ring { position:absolute; inset:0; border:1px solid rgba(174,182,198,.095); border-radius:50%; }
+#login-screen .orbital-ring:nth-child(1) { inset:75px; border-color: rgba(185,190,205,.08); animation:lunaOrbitalSpin 42s linear infinite; }
+#login-screen .orbital-ring:nth-child(2) { inset:15px; border-style:dashed; border-color:rgba(172,177,189,.085); animation:lunaOrbitalSpin 100s linear infinite reverse; }
+#login-screen .orbital-ring:nth-child(3) { inset:135px; border-color:rgba(172,177,189,.075); animation:lunaOrbitalSpin 60s linear infinite; }
+#login-screen .orbital-ring:nth-child(1)::before, #login-screen .orbital-ring:nth-child(2)::before {
+  content:""; position:absolute; top:50%; left:-3px; width:5px; height:5px; border-radius:50%;
+  background:#8f95a3; box-shadow:0 0 10px 2px rgba(191,198,213,.17);
+}
+#login-screen .arc-svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+#login-screen .arc-static { fill:none; stroke:#78808f; stroke-opacity:.11; stroke-width:.75; }
+#login-screen .arc-moving { fill:none; stroke:url(#movingArc); stroke-width:1.3; stroke-linecap:round; stroke-dasharray: 110 1800; filter:url(#arcGlow); transform-origin:center; animation:lunaOrbitalSpin 29s linear infinite; }
+#login-screen .arc-moving.second { stroke-width:1; stroke-dasharray: 70 1250; animation-duration:37s; animation-direction:reverse; }
+#login-screen .scene-cross { position:absolute; width:1px; height:1px; }
+#login-screen .scene-cross::before, #login-screen .scene-cross::after { content:""; position:absolute; background: rgba(190,197,212,.19); }
+#login-screen .scene-cross::before { width:16px; height:1px; left:-8px; }
+#login-screen .scene-cross::after { width:1px; height:16px; top:-8px; }
+#login-screen .cross-one { transform:translate(-365px,-185px); }
+#login-screen .cross-two { transform:translate(352px,210px); opacity:.45; }
+#login-screen .login-zone { position:relative; width: min(100%, 390px); animation:lunaRiseIn .95s var(--ease) both; }
+#login-screen .card-light {
+  position:absolute; inset:-3px; border-radius:15px;
+  background:radial-gradient(350px 200px at var(--pointer-x,50%) var(--pointer-y,0%),rgba(166,173,190,.15),transparent 70%);
+  opacity:.7; pointer-events:none;
+}
+#login-screen .login-card {
+  position:relative; overflow:hidden;
+  background:linear-gradient(145deg,rgba(27,28,32,.96),rgba(22,23,26,.965));
+  border:1px solid var(--panel-border); border-radius:12px; padding:30px 30px 23px;
+  box-shadow:0 35px 85px rgba(0,0,0,.43),0 1px 0 rgba(255,255,255,.025) inset;
+  backdrop-filter:blur(24px);
+}
+#login-screen .login-card::before {
+  content:""; position:absolute; height:1px; left:10%; right:10%; top:0;
+  background:linear-gradient(90deg,transparent,rgba(215,221,231,.23),transparent); opacity:.7;
+}
+#login-screen .login-card::after {
+  content:""; position:absolute; width:150px; height:150px; top:-110px; right:-105px; border-radius:50%;
+  background:rgba(190,198,217,.06); filter:blur(35px); pointer-events:none;
+  animation:lunaInCardGlow 8s ease-in-out infinite;
+}
+#login-screen .security-line { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+#login-screen .logo-pulse {
+  position:relative; width:43px; height:43px; display:grid; place-items:center; border-radius:11px;
+  border:1px solid #3b3d44; background:linear-gradient(145deg,#25262b,#1a1b1f); box-shadow:0 5px 12px rgba(0,0,0,.2);
+}
+#login-screen .logo-pulse::before {
+  content:""; position:absolute; inset:-5px; border-radius:14px; border:1px solid rgba(183,190,205,.13);
+  animation:lunaIconBreath 3.8s ease-in-out infinite;
+}
+#login-screen .logo-pulse svg { width:22px; height:22px; overflow:visible; }
+#login-screen .logo-pulse .wave { fill:none; stroke:#d7d9e1; stroke-linecap:round; stroke-width:1.7; }
+#login-screen .logo-pulse .wave-1 { animation:lunaSoundOne 2.8s ease-in-out infinite; transform-origin:center; }
+#login-screen .logo-pulse .wave-2 { animation:lunaSoundTwo 2.8s ease-in-out infinite .18s; transform-origin:center; }
+#login-screen .logo-pulse .center-dot { fill:#d7d9e1; }
+#login-screen .secure-caption { display:flex; align-items:center; gap:7px; font-size:8px; letter-spacing:.16em; color:#8c909b; font-weight:670; }
+#login-screen .secure-caption svg { width:11px; height:11px; opacity:.8; }
+#login-screen .eyebrow { margin:0 0 11px; font-size:8px; letter-spacing:.22em; color:#777b86; font-weight:700; }
+#login-screen .welcome-block {
+  position: relative;
+  min-height: 72px;
+  margin-bottom: 4px;
+  transition: opacity .25s ease, filter .25s ease;
+}
+#login-screen .welcome-block.is-morphing {
+  opacity: 0; filter: blur(4px); pointer-events: none;
+  min-height: 0; height: 0; margin: 0; overflow: hidden;
+  transition: opacity .25s ease, filter .25s ease, min-height .55s cubic-bezier(.65,0,.16,1), height .55s cubic-bezier(.65,0,.16,1), margin .55s cubic-bezier(.65,0,.16,1);
+}
+#login-screen h1 {
+  margin:0 0 9px; font-size:22px; line-height:1.38; font-weight:690; letter-spacing:-.055em;
+}
+#login-screen .subtitle { color:#9396a0; margin:0; font-size:11px; line-height:1.7; }
+#login-screen .signal-display { display:flex; align-items:center; gap:9px; height:35px; margin:13px 0 12px; overflow:hidden; }
+#login-screen .signal-label { flex:none; font-size:8px; color:#656975; letter-spacing:.13em; }
+#login-screen .signal-display svg { width:100%; max-width:190px; height:25px; overflow:visible; opacity:.85; }
+#login-screen .signal-display .wave-base { fill:none; stroke:#595e69; stroke-width:.7; opacity:.33; }
+#login-screen .signal-display .wave-scan {
+  fill:none; stroke:#bec3d1; stroke-width:1.35; stroke-dasharray:10 270; stroke-linecap:round;
+  animation:lunaScanLine 5.5s linear infinite; filter:drop-shadow(0 0 4px rgba(205,209,220,.52));
+}
+#login-screen .signal-display .wave-blur {
+  fill:none; stroke:#a9afbf; stroke-width:1.4; stroke-dasharray:65 290; stroke-linecap:round;
+  opacity:.32; animation:lunaScanLine 7s linear infinite 1s;
+}
+#login-screen .field { margin-bottom:15px; }
+#login-screen .field-header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:7px; }
+#login-screen .field label { display:block; color:#c4c6ce; font-size:10px; font-weight:630; }
+#login-screen .text-link { color:#8d919c; text-decoration:none; font-size:9px; transition:color .2s; }
+#login-screen .text-link:hover { color:#e2e5ec; }
+#login-screen .input-shell {
+  position:relative; height:39px; display:flex; align-items:center; border-radius:5px;
+  background:#111215; border:1px solid #353840; transition:border-color .25s,box-shadow .3s,background .3s;
+}
+#login-screen .input-shell:focus-within {
+  border-color:#959aa8; box-shadow:0 0 0 3px rgba(172,177,188,.1), 0 0 16px rgba(177,183,198,.06); background:#141518;
+}
+#login-screen .input-shell.error { border-color:#bd8585; box-shadow:0 0 0 3px rgba(189,133,133,.085); }
+#login-screen .input-shell svg { flex:none; margin-left:12px; width:13px; height:13px; color:#838793; transition:color .25s, transform .3s; }
+#login-screen .input-shell:focus-within > svg { color:#d1d5de; transform:translateY(-1px); }
+#login-screen .input-shell input {
+  flex:1; width:0; height:100%; border:0; outline:0; color:#e6e7ed; background:transparent;
+  padding:0 9px; font-size:11px;
+}
+#login-screen .input-shell input::placeholder { color:#656973; }
+#login-screen .input-shell .eye-button {
+  padding:0; width:39px; height:100%; flex:none; border:0; background:transparent; color:#777b85;
+  display:grid; place-items:center; transition:color .2s;
+}
+#login-screen .input-shell .eye-button:hover { color:#e0e2e8; }
+#login-screen .input-shell .eye-button svg { margin:0; width:14px; height:14px; }
+#login-screen .login-slot {
+  position: relative; width: 100%; height: 45px; margin-top: 10px;
+}
+#login-screen .login-button {
+  position:relative; width:100%; overflow:hidden; border:1px solid #e0e2e8; height:45px; margin:0;
+  padding:0 14px; border-radius:6px; color:#202228;
+  background:linear-gradient(180deg,#e7e8ed 0%,#d5d7df 100%);
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:11px; font-weight:690;
+  transition:transform .22s var(--ease),box-shadow .22s var(--ease),background .22s, opacity .3s, visibility .3s;
+}
+#login-screen .login-button:hover { transform:translateY(-1px); box-shadow:0 8px 23px rgba(210,216,230,.12); background:linear-gradient(180deg,#f3f4f7 0%,#dfe1e8 100%); }
+#login-screen .login-button:active { transform:translateY(0) scale(.992); }
+#login-screen .login-button:disabled { cursor:default; transform:none; opacity:.55; }
+#login-screen .login-button.is-replaced { opacity: 0; visibility: hidden; pointer-events: none; }
+#login-screen .login-button .btn-arrow { width:17px; height:17px; transition:transform .3s var(--ease); }
+#login-screen .login-button:not(:disabled):hover .btn-arrow { transform:translateX(3px); }
+#login-screen .error-text { min-height:18px; margin-top:8px; color:#d2a7a7; font-size:10px; }
+#login-screen .card-footer {
+  display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:5px;
+  border-top:1px solid #2a2b30; margin-top:7px; padding-top:19px; font-size:10px; color:#858994;
+}
+#login-screen .card-footer a { color:#d7d9e1; text-decoration:none; font-size:10px; font-weight:650; }
+#login-screen .demo-note { text-align:center; font-size:9px; color:#777b85; margin:12px 0 0; }
+#login-screen .demo-note strong { font-weight:650; color:#bec0ca; }
+#login-screen .small-caption {
+  margin:20px 0 0; text-align:center; font-size:8px; color:#646872; letter-spacing:.23em; font-weight:650;
+}
+#login-screen .site-footer {
+  position:relative; z-index:10; display:flex; align-items:center; justify-content:space-between; gap:18px;
+  width:100%; min-height:65px; padding:0 clamp(24px,4vw,70px) 18px; flex:none;
+}
+#login-screen .footer-note { display:flex; align-items:center; gap:8px; color:#5d616b; font-size:9px; letter-spacing:.11em; }
+#login-screen .footer-note svg { width:12px; height:12px; }
+#login-screen .toast {
+  position:fixed; left:50%; bottom:88px; transform:translate(-50%,10px); z-index:40;
+  color:#e1e2e7; padding:11px 15px; border-radius:8px; border:1px solid #383a42; background:#232429;
+  font-size:11px; box-shadow:0 15px 40px rgba(0,0,0,.4); opacity:0; pointer-events:none;
+  transition:opacity .3s,transform .3s; white-space:nowrap; max-width:calc(100vw - 30px);
+}
+#login-screen .toast.show { opacity:1; transform:translate(-50%,0); }
+@media(max-width:620px) {
+  #login-screen .site-header { min-height:62px; padding:0 22px; }
+  #login-screen .main { padding:44px 18px 35px; }
+  #login-screen .login-card { padding:26px 24px 22px; }
+  #login-screen h1 { font-size:21px; }
+  #login-screen .orbit-stage { transform:scale(.65); }
+  #login-screen .cross-one, #login-screen .cross-two { display:none; }
+  #login-screen .site-footer { padding:0 18px 22px; justify-content:center; }
+}
+
+/* Morph flying actor */
+#morph-actor {
+  position: fixed; z-index: 100; pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  color: #202228;
+  background: linear-gradient(180deg,#e7e8ed,#d5d7df);
+  border: 1px solid #e0e2e8;
+  border-radius: 6px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.35);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Noto Sans KR", sans-serif;
+  font-size: 11px; font-weight: 690; letter-spacing: -.02em;
+  opacity: 0; visibility: hidden;
+  will-change: left, top, width, height, border-radius, background, color, transform, box-shadow;
+  transition: background .45s cubic-bezier(.22,1,.36,1), color .35s ease, border-color .45s ease, box-shadow .45s ease;
+}
+#morph-actor.is-live { opacity: 1; visibility: visible; }
+#morph-actor.is-interactive { pointer-events: auto; cursor: pointer; }
+#morph-actor .morph-inner { justify-content: space-between; padding: 0 2px; }
+#morph-actor[data-phase="welcome"] .morph-inner,
+#morph-actor[data-phase="verifying"] .morph-inner,
+#morph-actor[data-phase="check"] .morph-inner,
+#morph-actor[data-phase="cube"] .morph-inner { justify-content: center; padding: 0; }
+#morph-actor[data-phase="welcome"] {
+  flex-direction: column; align-items: flex-start; justify-content: flex-start;
+  text-align: left; padding: 0; gap: 0;
+  background: transparent; border-color: transparent; box-shadow: none; color: #eff0f3;
+}
+#morph-actor[data-phase="welcome"] .morph-title {
+  font-size: 22px; line-height: 1.38; font-weight: 690; letter-spacing: -.055em; margin: 0 0 9px;
+}
+#morph-actor[data-phase="welcome"] .morph-sub {
+  color: #9396a0; margin: 0; font-size: 11px; line-height: 1.7; font-weight: 400;
+}
+#morph-actor[data-phase="button"],
+#morph-actor[data-phase="verifying"] {
+  padding: 0 14px; gap: 9px;
+  background: linear-gradient(180deg,#e7e8ed,#d5d7df);
+  border-color: #e0e2e8; color: #202228;
+  border-radius: 6px;
+}
+#morph-actor[data-phase="verifying"] {
+  background: #23262d; border-color: #565d6b; color: #eff1f6;
+  border-radius: 28px;
+  box-shadow: 0 10px 40px rgba(167,179,205,.12);
+}
+#morph-actor[data-phase="check"] {
+  background: #e6e9f0; border-color: #eff1f5; color: #17191f;
+  border-radius: 50%;
+  box-shadow: 0 0 0 8px rgba(216,220,234,.06), 0 0 40px rgba(214,220,235,.13);
+  padding: 0;
+}
+#morph-actor[data-phase="cube"] {
+  background: linear-gradient(160deg,#242527,#131415);
+  border-color: #45474b; color: #e1e3e6;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  padding: 0;
+}
+#morph-actor .morph-inner {
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  width: 100%; height: 100%; white-space: nowrap;
+}
+#morph-actor .scan-stack { display:flex; gap:3px; align-items:center; }
+#morph-actor .scan-stack i {
+  display:block; width:3px; height:12px; background: currentColor; opacity:.55; border-radius:2px;
+  animation:lunaScanBars .58s ease-in-out infinite alternate;
+}
+#morph-actor .scan-stack i:nth-child(2){animation-delay:.13s;height:17px;}
+#morph-actor .scan-stack i:nth-child(3){animation-delay:.26s;height:9px;}
+#morph-actor .scan-stack i:nth-child(4){animation-delay:.38s;height:14px;}
+#morph-actor .check-svg {
+  width: 28px; height: 28px; stroke: currentColor; fill: none;
+  stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+}
+#morph-actor .check-svg path {
+  stroke-dasharray: 35; stroke-dashoffset: 35;
+}
+#morph-actor[data-phase="check"] .check-svg path {
+  animation: lunaDrawTick .5s cubic-bezier(.22,1,.36,1) forwards;
+}
+#morph-actor .cube-svg { width: 23px; height: 23px; opacity: 0; transform: scale(.7); transition: opacity .35s ease, transform .45s cubic-bezier(.22,1,.36,1); }
+#morph-actor[data-phase="cube"] .cube-svg { opacity: 1; transform: scale(1); }
+#morph-actor[data-phase="cube"] .check-svg { opacity: 0; transform: scale(.6); transition: opacity .25s, transform .25s; position: absolute; }
+
+@keyframes lunaPing { 0% { opacity:.58; transform:scale(.7); } 75%,100% { opacity:0; transform:scale(1.8); } }
+@keyframes lunaOrbitalSpin { to { transform:rotate(360deg); } }
+@keyframes lunaHaloBreath { 0%,100% { opacity:.56; transform:scale(.94); } 50% { opacity:1; transform:scale(1.09); } }
+@keyframes lunaInCardGlow { 0%,100% { opacity:.45; transform:translate(0,0); } 50% { opacity:1; transform:translate(-40px,40px); } }
+@keyframes lunaIconBreath { 0%,100% { opacity:.25; transform:scale(.92); } 50% { opacity:.8; transform:scale(1.09); } }
+@keyframes lunaSoundOne { 0%,100% { opacity:.5; transform:scaleY(.77); } 50% { opacity:1; transform:scaleY(1.08); } }
+@keyframes lunaSoundTwo { 0%,100% { opacity:.8; transform:scaleY(1.06); } 50% { opacity:.4; transform:scaleY(.73); } }
+@keyframes lunaScanLine { from { stroke-dashoffset:0; } to { stroke-dashoffset:-560; } }
+@keyframes lunaRiseIn { from { opacity:0; transform:translateY(22px) scale(.984); filter:blur(5px); } to { opacity:1; transform:translateY(0) scale(1); filter:blur(0); } }
+@keyframes lunaScanBars { to { transform:scaleY(.53); opacity:.47; } }
+@keyframes lunaDrawTick { to { stroke-dashoffset:0; } }
+
+/* ===== HOME LAYER ===== */
+#home-screen {
+  position: fixed; inset: 0; z-index: 10;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transform: scale(1.015);
+  transition: opacity .75s cubic-bezier(.22,1,.36,1), visibility .75s, transform .85s cubic-bezier(.22,1,.36,1);
+}
+#home-screen.is-ready {
+  /* keep invisible but laid out for measuring brand-cube */
+  opacity: 0; visibility: hidden; pointer-events: none;
+}
+#home-screen.is-visible {
+  opacity: 1; visibility: visible; pointer-events: auto; transform: scale(1);
+}
+#home-screen .brand-cube.is-receiving {
+  opacity: 0;
+}
+
+/* ===== FORMA CONNECT (post-login) ===== */
+:root{color-scheme:dark;--bg:#101112;--rail:#0e0f10;--sidebar:#151617;--panel:#161718;--surface:#1c1e20;--hover:#242629;--hover-hi:#303236;--line:#2c2e31;--line-hi:#43464b;--text:#f0f0f1;--soft:#c6c8cc;--muted:#85888e;--faint:#65686e;--accent:#e9eaed;--good:#aec6b0;--bad:#d2a5a4;--warn:#d9c7a0;--ease:cubic-bezier(.2,.8,.2,1);--spring:cubic-bezier(.18,1,.28,1);--radius:10px;--density:1;--rail-w:70px;--channels-w:255px;--members-w:240px}
+*{box-sizing:border-box}html,body{height:100%;margin:0}html{background:var(--bg)}body{color:var(--text);background:var(--bg);font:13px/1.52 Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif;letter-spacing:-.015em;overflow:hidden}button,input,textarea,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}button,input,textarea,select{color:inherit}a{color:inherit}h1,h2,h3,p{margin:0}*::selection{background:#777b8366}*:focus-visible{outline:2px solid #dedfe6;outline-offset:2px}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:#36383c;border:2px solid transparent;background-clip:padding-box;border-radius:9px}::-webkit-scrollbar-track{background:transparent}.icon{width:18px;height:18px;flex-shrink:0;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}.icon.tiny{width:14px;height:14px}.icon.small{width:16px;height:16px}.icon.large{width:22px;height:22px}.icon.xlarge{width:28px;height:28px}.app{height:100dvh;display:grid;grid-template-columns:var(--rail-w) var(--channels-w) minmax(0,1fr) var(--members-w);overflow:hidden}.app.members-hidden{grid-template-columns:var(--rail-w) var(--channels-w) minmax(0,1fr)}.app.members-hidden .members{display:none}.servers{background:var(--rail);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:11px;padding:17px 8px 14px;position:relative;z-index:11}.brand-cube{width:39px;height:39px;border:1px solid #45474b;border-radius:12px;display:grid;place-items:center;background:linear-gradient(160deg,#242527,#131415);color:#e1e3e6;transition:transform .26s var(--spring),border-color .25s,background .25s}.brand-cube .icon{width:23px;height:23px}.brand-cube:hover{transform:translateY(-2px);border-color:#9b9ea4}.rail-rule{width:28px;height:1px;background:#2f3133;margin:3px 0}.server-item{position:relative;width:43px;height:43px;border:1px solid #393a3f;border-radius:15px;display:grid;place-items:center;font-size:13px;letter-spacing:-.05em;font-weight:760;background:#1c1d1f;color:#e6e7e9;transition:transform .22s var(--spring),background .22s,border-radius .22s,border-color .22s}.server-item:hover{transform:translateY(-2px);background:#2c2e31;border-color:#6d7177;border-radius:13px}.server-item.active{background:#e5e6e9;color:#1a1b1d;border-color:#eff0f2;border-radius:12px}.server-item.active:before{content:"";position:absolute;left:-13px;width:3px;height:27px;border-radius:4px;background:#e7e8ea}.server-item .ping{position:absolute;right:-3px;top:-4px;min-width:17px;height:17px;border-radius:12px;background:#e2e2e4;color:#111;font-size:10px;display:grid;place-items:center;border:3px solid #0d0e0f;box-sizing:content-box;padding:0 2px}.server-item.utility{color:#aab0ad}.rail-bottom{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:10px}.rail-online{height:6px;width:6px;border-radius:50%;background:#c9d5c8;box-shadow:0 0 0 5px #c9d5c811}
+.sidebar{background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0;z-index:10}.workspace-header{min-height:68px;padding:14px 17px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:9px}.workspace-heading{min-width:0;display:grid;gap:1px}.eyebrow{font:700 9px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.115em;color:#787b81}.workspace-heading strong{white-space:nowrap;text-overflow:ellipsis;overflow:hidden;font-size:13px;font-weight:760}.subline{font-size:10px;color:var(--muted)}.icon-btn{appearance:none;width:31px;height:31px;flex:0 0 auto;display:inline-grid;place-items:center;background:transparent;color:#a0a2a7;border:1px solid transparent;border-radius:8px;transition:background .18s,color .18s,transform .18s,border-color .18s}.icon-btn:hover{background:#292b2d;color:#fff;border-color:#3d3f43}.icon-btn:active,.btn:active{transform:scale(.965)}.nav-scroll{flex:1;min-height:0;overflow:auto;padding:15px 9px 16px}.nav-search{display:flex;align-items:center;gap:8px;border:1px solid #333538;background:#1b1c1e;border-radius:8px;height:34px;padding:0 10px;color:#888a90;margin:0 5px 16px}.nav-search:focus-within{border-color:#777a82}.nav-search input{width:100%;min-width:0;border:0;outline:none;background:transparent;color:#dedfe1;font-size:11px}.nav-search .icon{width:15px}.nav-search kbd{font:10px monospace;color:#81848a;background:#292b2d;border-radius:4px;padding:1px 4px;white-space:nowrap}.nav-section{margin-top:20px}.nav-section:first-of-type{margin-top:10px}.nav-section-head{padding:0 10px 9px;display:flex;align-items:center;justify-content:space-between;gap:6px}.nav-section-head .section-label{text-transform:uppercase;font:750 10px/1.3 ui-monospace,Consolas,monospace;letter-spacing:.11em;color:#75787e}.nav-section-head .icon-btn{width:23px;height:23px}.channel-item{width:100%;height:35px;display:flex;align-items:center;gap:11px;text-align:left;background:transparent;border:1px solid transparent;border-radius:7px;padding:0 10px;color:#979aa0;font-size:11.5px;transition:background .18s,color .18s,transform .18s}.channel-item .icon{width:16px;height:16px;color:#797d84}.channel-item:hover{background:#222426;color:#ededf0;transform:translateX(1px)}.channel-item.active{background:#2a2c2f;color:#f5f5f5;border-color:#393b40;font-weight:650}.channel-item.active .icon{color:#e7e8eb}.channel-item.unread:not(.active){color:#e2e3e5;font-weight:700}.channel-item .count{margin-left:auto;border-radius:99px;background:#e3e4e6;color:#171819;font-size:9px;font-weight:780;min-width:17px;text-align:center;padding:1px 5px}.channel-item .sml{margin-left:auto;font:9px monospace;color:#777b80}.channel-item .channel-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.voice-person{display:flex;gap:7px;align-items:center;padding:5px 15px 4px 36px;color:#8c8f93;font-size:10px}.voice-person .mini-dot{width:5px;height:5px;background:#b2c9b6;border-radius:50%}.panel-dm{display:none}.sidebar-footer{border-top:1px solid var(--line);padding:10px 11px;display:flex;flex-direction:column;gap:8px;background:#131415}.voice-connected{background:#1d201e;border:1px solid #39413a;border-radius:9px;padding:11px 11px 9px;display:none;gap:8px;align-items:center}.voice-connected.visible{display:flex}.voice-connected .signal{color:#b9d1b9}.voice-connected b{font-size:11px}.voice-connected small{display:block;color:#929e94;font-size:10px}.user-footer{display:flex;align-items:center;gap:9px}.avatar{width:34px;height:34px;border:1px solid #4b4e52;display:grid;place-items:center;border-radius:11px;background:#3b3d41;color:#fff;font-size:11px;font-weight:760;position:relative;flex:0 0 auto;user-select:none}.avatar:after{content:"";position:absolute;right:-3px;bottom:-3px;width:9px;height:9px;border:3px solid var(--sidebar);border-radius:50%;background:#afbfae}.avatar.offline:after{background:#73777d}.avatar.busy:after{background:#d3b4aa}.avatar.away:after{background:#d4c7a5}.avatar.sm{width:29px;height:29px;border-radius:9px;font-size:10px}.avatar.lg{width:43px;height:43px;border-radius:13px;font-size:13px}.avatar.sq:after{display:none}.user-meta{min-width:0;flex:1;display:grid;line-height:1.3}.user-meta strong{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.user-meta small{font-size:9px;color:#7b7f84;white-space:nowrap}.footer-actions{display:flex;gap:1px}.footer-actions .icon-btn{width:27px;height:29px}
+.chat{min-width:0;display:flex;flex-direction:column;background:var(--bg);position:relative}.chat-header{height:68px;flex:none;border-bottom:1px solid var(--line);padding:0 23px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:#111213;z-index:3}.header-main{display:flex;align-items:center;gap:11px;min-width:0}.header-main .header-icon{width:31px;height:31px;border:1px solid #36383c;border-radius:9px;display:grid;place-items:center;color:#babdc1}.header-main .header-icon .icon{width:17px}.header-name{display:grid;min-width:0}.header-name b{font-size:13px;font-weight:740;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.header-name small{font-size:10px;color:#898c92;max-width:340px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}.header-tools{display:flex;align-items:center;gap:4px;flex:0 0 auto}.header-tools .icon-btn.active{background:#303236;color:#fff;border-color:#44464a}.sep{height:20px;width:1px;background:#343639;margin:0 6px}.mobile-menu{display:none}.thread-divider{margin-left:0}
+.chat-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scroll-behavior:smooth;padding:20px 30px 18px}.channel-intro{padding:12px 0 25px;animation:rise .46s var(--ease) both}.big-channel-icon{height:53px;width:53px;display:grid;place-items:center;border:1px solid #404247;border-radius:16px;background:linear-gradient(145deg,#28292c,#171819);margin-bottom:16px}.big-channel-icon .icon{width:28px;height:28px}.channel-intro h2{font-size:23px;letter-spacing:-.055em;margin-bottom:4px;font-weight:790}.channel-intro p{font-size:12px;color:#8d9096}.channel-intro .intro-footer{font:10px ui-monospace,Consolas,monospace;color:#6f7379;margin-top:13px}.date-divider{display:flex;align-items:center;gap:13px;color:#75787e;font:10px ui-monospace,Consolas,monospace;margin:2px 0 18px}.date-divider:before,.date-divider:after{content:"";height:1px;flex:1;background:#2a2c2f}.message{position:relative;display:flex;align-items:flex-start;gap:12px;padding:8px 11px;margin:0 -11px 2px;border-radius:9px;transition:background .16s;animation:msgIn .26s var(--ease) both}.message:hover{background:#191b1d}.message.own:hover{background:#1a1c1e}.message-body{min-width:0;flex:1}.message-head{display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap}.author{background:none;border:none;padding:0;color:#e3e5e8;font-weight:750;font-size:11.5px}.author:hover{text-decoration:underline}.role-chip{color:#c6c9ce;border:1px solid #3c3f43;background:#25272a;border-radius:4px;font:700 8px/1.3 ui-monospace,Consolas,monospace;letter-spacing:.06em;padding:2px 5px}.message-time{font-size:9px;color:#71757c;font-family:ui-monospace,Consolas,monospace}.message-text{white-space:pre-wrap;word-wrap:break-word;color:#c8cacf;font-size:12.5px;line-height:1.75;max-width:85ch}.message-text strong{color:#fafafa}.message-text code{font-family:ui-monospace,Consolas,monospace;background:#27292d;border:1px solid #3a3d42;border-radius:4px;padding:1px 5px;font-size:11px}.message.mention{background:#24231f;border-left:2px solid #afa48d}.reply-reference{display:flex;align-items:center;gap:6px;color:#9fa2a7;font-size:10px;margin-bottom:5px;padding-left:2px}.reply-reference:before{content:"↳";font-size:14px;color:#777b81}.reply-reference strong{color:#d5d7d9}.embed{margin-top:10px;border:1px solid #3b3d41;border-left:3px solid #adb2bb;border-radius:8px;background:#1a1b1d;max-width:520px;padding:13px 15px}.embed .embed-top{display:flex;gap:7px;align-items:center;color:#8a8e94;font-size:10px;font-family:monospace;margin-bottom:7px}.embed b{display:block;font-size:13px;margin-bottom:4px}.embed p{font-size:11px;color:#94979e;line-height:1.65}.embed .embed-foot{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap}.embed .embed-foot span{border:1px solid #414349;border-radius:5px;padding:3px 7px;color:#b9bbc0;font:9px monospace}.attachment{margin-top:9px;display:flex;align-items:center;gap:10px;background:#1d1f21;border:1px solid #3a3d42;border-radius:8px;max-width:350px;padding:10px}.attachment .icon{color:#babdc2}.attachment div{min-width:0;display:grid}.attachment b{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.attachment small{font-size:9px;color:#888b92}.attachment img{display:block;max-width:100%;max-height:240px;object-fit:contain;border-radius:6px}.attachment:has(img){max-width:330px;display:block}.reactions{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap}.react{height:25px;padding:0 9px;display:flex;align-items:center;gap:5px;border:1px solid #3b3d41;border-radius:6px;background:#232527;color:#b4b7bc;font-size:10px;transition:background .15s,transform .17s,border-color .15s}.react:hover{background:#33353a;transform:translateY(-2px)}.react.selected{color:#f1f2f3;background:#313337;border-color:#9ba0a8}.react span{font-size:13px}.react.add-react{padding:0 7px}.msg-toolbar{position:absolute;top:-12px;right:10px;display:flex;gap:1px;padding:3px;border:1px solid #44464a;border-radius:8px;background:#222426;box-shadow:0 10px 20px #0007;opacity:0;transform:translateY(5px);pointer-events:none;transition:opacity .16s,transform .16s;z-index:2}.message:hover .msg-toolbar,.message:focus-within .msg-toolbar{opacity:1;transform:none;pointer-events:auto}.msg-toolbar .icon-btn{width:28px;height:26px}.msg-toolbar .icon{width:14px}.poll{border:1px solid #3b3e41;border-radius:9px;padding:13px;max-width:500px;margin-top:10px;background:#1b1d1f}.poll strong{font-size:12px}.poll p{font-size:10px;color:#8c9095;margin:3px 0 11px}.poll-option{width:100%;padding:9px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid #393c40;background:#242629;border-radius:7px;margin-top:6px;text-align:left;position:relative;overflow:hidden}.poll-option>*{position:relative;z-index:1}.poll-fill{position:absolute;inset:0 auto 0 0;background:#ffffff13;transition:width .5s var(--ease);z-index:0}.poll-option.voted{border-color:#8c9198}.poll-option span{font-size:11px}.poll-option b{font-size:10px;font-family:monospace}.poll-foot{font-size:10px;color:#85898f;margin-top:10px}
+.composer-wrap{flex:none;padding:8px 26px 18px;background:linear-gradient(0deg,#101112 75%,#101112dd)}.composer-status{height:22px;color:#868a90;font-size:10px;padding-left:6px;display:flex;align-items:center;gap:7px}.typing-bubbles{display:flex;gap:3px}.typing-bubbles i{width:3px;height:3px;border-radius:50%;background:#adb1b8;animation:typing 1s ease-in-out infinite}.typing-bubbles i:nth-child(2){animation-delay:.15s}.typing-bubbles i:nth-child(3){animation-delay:.3s}.composer{border:1px solid #3b3d41;border-radius:11px;background:#1b1d1f;box-shadow:0 10px 25px #00000015;transition:border-color .18s,box-shadow .18s;position:relative}.composer:focus-within{border-color:#777a80;box-shadow:0 0 0 3px #ffffff06}.replying{display:none;align-items:center;gap:10px;border-bottom:1px solid #393b3f;padding:8px 12px;color:#a9adb2;font-size:10px}.replying.visible{display:flex}.replying strong{color:#f0f1f3}.replying .icon-btn{margin-left:auto;width:25px;height:25px}.attachment-preview{display:none;border-bottom:1px solid #393b3f;padding:8px 13px;align-items:center;gap:8px;color:#c7c9cd;font-size:10px}.attachment-preview.visible{display:flex}.attachment-preview .icon-btn{margin-left:auto;width:24px;height:24px}.composer-edit{display:flex;align-items:flex-end;gap:3px;padding:8px 9px}.composer-edit textarea{min-height:35px;max-height:170px;width:100%;resize:none;flex:1;background:transparent;outline:none;border:0;padding:8px 7px 7px;color:#eef0f2;line-height:1.5;font-size:12px}.composer-edit textarea::placeholder{color:#777b81}.composer-edit .icon-btn{margin-bottom:3px}.composer-send{background:#dedfe2;color:#161719;border:1px solid #f1f2f4;border-radius:7px;width:32px;height:32px;display:grid;place-items:center;flex-shrink:0;margin:1px 2px 2px;transition:transform .2s,background .2s}.composer-send:hover{background:#fff;transform:translateY(-1px)}.composer-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 12px 7px}.composer-tools .minor{display:flex;gap:2px}.composer-tools .icon-btn{height:26px;width:29px}.composer-tools .icon{width:15px}.composer-tools .hint{font:9px monospace;color:#6e7379}.composer-disabled{opacity:.55;pointer-events:none}.message-empty{margin:40px auto;color:#868990;text-align:center;font-size:12px}
+.members{background:#141516;border-left:1px solid var(--line);min-width:0;overflow-y:auto}.members-header{height:68px;padding:0 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}.members-header strong{font-size:11px}.members-subhead{padding:20px 17px 9px;color:#6f7278;font:750 10px ui-monospace,Consolas,monospace;letter-spacing:.095em}.member-row{display:flex;align-items:center;gap:9px;margin:0 8px;padding:8px;border:1px solid transparent;background:none;border-radius:8px;text-align:left;width:calc(100% - 16px);transition:background .18s}.member-row:hover{background:#222426;border-color:#323437}.member-row .member-meta{min-width:0;display:grid;gap:1px}.member-row .member-meta b{font-size:11px}.member-row .member-meta small{font-size:9px;color:#86898e}.member-row.offline{opacity:.58}.member-role{margin-left:auto;align-self:flex-start;font-size:8px;border:1px solid #35373b;color:#989ba1;border-radius:5px;padding:2px 5px}.members-footer{margin:15px;border-top:1px solid var(--line);padding-top:16px;color:#71757a;font-size:10px;line-height:1.6}
+.overlay{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;padding:18px;background:#000a;backdrop-filter:blur(7px);animation:fadeIn .2s ease}.overlay.open{display:flex}.dialog{width:min(100%,486px);max-height:min(90dvh,780px);display:flex;flex-direction:column;background:linear-gradient(160deg,#1c1e20,#151617);border:1px solid #494b4f;border-radius:14px;box-shadow:0 26px 88px #000c;animation:dialogIn .26s var(--spring);overflow:hidden}.dialog.wide{width:min(100%,720px)}.dialog-head{padding:20px 22px 15px;border-bottom:1px solid #303237;display:flex;gap:12px;align-items:flex-start}.dialog-head>div{flex:1}.dialog-head .eyebrow{margin-bottom:5px}.dialog-head h2{font-size:18px;letter-spacing:-.04em}.dialog-head p{color:#8e9198;font-size:11px;margin-top:4px}.dialog-body{padding:18px 22px;overflow-y:auto}.dialog-foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:13px 22px;border-top:1px solid #303237}.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:34px;padding:0 13px;background:#27292b;border:1px solid #46484d;border-radius:7px;font-size:11px;font-weight:650;transition:background .18s,border-color .18s,transform .18s}.btn:hover{background:#37393c;border-color:#676a70}.btn.primary{background:#e5e6e8;border-color:#f0f1f2;color:#111213}.btn.primary:hover{background:#fff}.btn.danger{color:#e4b9b8;border-color:#664447;background:#342426}.btn.danger:hover{background:#452b2e}.btn .icon{width:15px}.field{display:grid;gap:6px;margin:0 0 14px}.field label{font-size:10.5px;color:#a5a7ab;font-weight:660}.field input,.field select,.field textarea{width:100%;border:1px solid #424449;border-radius:8px;padding:10px 11px;outline:none;background:#151719;color:#f0f1f2;font-size:12px}.field input:focus,.field select:focus,.field textarea:focus{border-color:#a9adb4}.field .help{font-size:10px;color:#767a80}.field textarea{min-height:95px;resize:vertical}.choice-stack{display:grid;gap:7px}.choice{display:flex;align-items:center;gap:11px;border:1px solid #3d3f43;border-radius:9px;padding:11px;background:#202225;text-align:left;width:100%;transition:background .18s,border .18s}.choice:hover{background:#2a2c2f;border-color:#81848a}.choice .icon{width:19px;height:19px}.choice span{display:grid;gap:2px;flex:1}.choice strong{font-size:11px}.choice small{font-size:10px;color:#81858b}.choice .icon:last-child{width:15px;color:#83878c}.soft-note{font-size:10px;color:#93979d;line-height:1.6;border:1px solid #3a3c40;background:#212326;border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px;margin-top:12px}.soft-note .icon{width:15px;flex:0 0 auto}.settings-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #303236}.settings-row:last-child{border:0}.settings-row>div{flex:1;min-width:0;display:grid;gap:2px}.settings-row b{font-size:11px}.settings-row small{font-size:10px;color:#8b8e94}.switch{position:relative;display:block;width:38px;height:21px;flex:0 0 auto}.switch input{position:absolute;opacity:0;inset:0;width:100%;cursor:pointer}.switch span{display:block;width:100%;height:100%;border-radius:99px;border:1px solid #616469;background:#343639;transition:background .2s,border-color .2s}.switch span:after{content:"";position:absolute;left:3px;top:4px;width:13px;height:13px;border-radius:50%;background:#aaadb2;transition:transform .22s,background .22s}.switch input:checked+span{background:#d4d8db;border-color:#e5e9eb}.switch input:checked+span:after{transform:translateX(16px);background:#17191c}.switch input:focus-visible+span{outline:2px solid #fff;outline-offset:3px}.segmented{padding:3px;display:flex;align-items:center;gap:3px;border:1px solid #393b40;border-radius:8px;background:#1a1c1e;max-width:max-content}.segmented button{border:0;background:transparent;color:#94989e;border-radius:6px;padding:7px 12px;font-size:10px}.segmented button.active{color:#fff;background:#34363a}.profile-cover{height:70px;margin:-18px -22px 15px;background:linear-gradient(120deg,#34373b,#202224);border-bottom:1px solid #4b4d50}.profile-identity{display:flex;align-items:center;gap:12px;margin-bottom:15px}.profile-identity .avatar{width:49px;height:49px;font-size:16px}.profile-identity h3{font-size:15px}.profile-identity small{color:#92969b;font-size:10px}.profile-roles{display:flex;gap:6px;flex-wrap:wrap}.profile-roles span{font:10px monospace;color:#b4b7be;border:1px solid #45474d;border-radius:5px;padding:4px 7px}.profile-desc{margin:14px 0;font-size:11px;color:#a5a8ad}.profile-actions{display:flex;gap:7px}.search-results{max-height:420px;overflow:auto}.search-hit{display:flex;gap:10px;align-items:flex-start;padding:10px 4px;border-bottom:1px solid #2b2d31;background:none;border-top:0;border-left:0;border-right:0;width:100%;text-align:left}.search-hit:hover{background:#232527}.search-hit>div{display:grid;gap:3px}.search-hit b{font-size:11px}.search-hit span{font-size:10px;color:#979ba1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:460px}.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}.emoji-grid button{height:40px;background:#232527;border:1px solid transparent;border-radius:8px;font-size:22px}.emoji-grid button:hover{background:#393c40;border-color:#55585c}.quick-results{display:grid;gap:6px}.quick-row{display:flex;align-items:center;gap:10px;padding:11px;border-radius:8px;background:#222426;border:1px solid #383b3f;text-align:left}.quick-row:hover{background:#303236}.quick-row .icon{color:#b7bac0}.quick-row span{flex:1;font-size:11px}.toast-viewport{position:fixed;bottom:22px;right:22px;z-index:110;display:grid;gap:8px;max-width:min(370px,calc(100vw - 30px));pointer-events:none}.toast{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid #484b4f;border-radius:10px;background:#242628;color:#f0f1f2;box-shadow:0 12px 35px #0009;animation:toastIn .28s var(--spring);pointer-events:auto}.toast .icon{color:#c7c9cb}.toast>div{display:grid;gap:2px;flex:1}.toast b{font-size:11px}.toast small{font-size:10px;color:#a0a3a9}.toast button{border:0;background:none;color:#92969b}.bottom-tabs{display:none}.menu-backdrop{display:none}.voice-stage{padding:25px 30px;overflow:auto;flex:1}.voice-stage-intro{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin:12px 0 25px}.voice-stage-intro h2{font-size:22px}.voice-stage-intro p{font-size:11px;color:#8e9298}.voice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px;max-width:900px}.voice-tile{height:155px;border-radius:11px;border:1px solid #3d4044;background:linear-gradient(160deg,#1f2224,#151719);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;position:relative;overflow:hidden}.voice-tile.speaking:before{content:"";position:absolute;inset:0;border:2px solid #8ea49a;border-radius:inherit;box-shadow:inset 0 0 25px #b5d8b00c;animation:talk 2s ease-in-out infinite}.voice-tile .avatar{height:54px;width:54px;font-size:17px;border-radius:17px}.voice-tile b{font-size:12px}.voice-tile small{font-size:9px;color:#93969b}.voice-controls{margin:27px auto;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.voice-controls .btn{min-height:42px}.voice-info{max-width:700px;border:1px solid #303236;background:#17191b;border-radius:10px;padding:13px;margin:20px auto;color:#989ca1;font-size:11px}.voice-empty{display:grid;place-items:center;gap:13px;text-align:center;padding:70px 18px}.voice-empty .icon{width:40px;height:40px;color:#a7a9af}.voice-empty h2{font-size:22px}.voice-empty p{font-size:12px;color:#8c9096}.editing-hint{margin-top:6px;color:#a8adaf;font-size:10px}.editing-hint button{border:0;background:none;color:#e1e2e4;padding:0 2px;text-decoration:underline}
+@keyframes rise{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}@keyframes msgIn{from{transform:translateY(6px);opacity:.35}to{transform:none;opacity:1}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes dialogIn{from{transform:translateY(14px) scale(.985);opacity:0}to{transform:none;opacity:1}}@keyframes toastIn{from{transform:translateY(12px) scale(.98);opacity:0}to{transform:none;opacity:1}}@keyframes typing{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-4px);opacity:1}}@keyframes talk{50%{opacity:.36}}
+body.compact{--density:.88}body.compact .message{padding-top:4px;padding-bottom:4px}body.compact .channel-item{height:29px}body.compact .message-text{line-height:1.5}body.compact .chat-scroll{padding-top:12px}body.low-motion *,body.low-motion *::before,body.low-motion *::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+@media(max-width:1270px){:root{--members-w:208px;--channels-w:235px}.chat-scroll{padding-left:21px;padding-right:21px}.composer-wrap{padding-left:18px;padding-right:18px}}
+@media(max-width:1020px){.app{grid-template-columns:var(--rail-w) var(--channels-w) minmax(0,1fr)}.members{display:none}.app.members-hidden{grid-template-columns:var(--rail-w) var(--channels-w) minmax(0,1fr)}}
+@media(max-width:710px){:root{--rail-w:0px;--channels-w:0px}.app,.app.members-hidden{display:block}.servers{position:fixed;top:0;bottom:0;left:0;width:66px;z-index:45;transform:translateX(-100%);transition:transform .26s var(--ease)}.sidebar{position:fixed;top:0;bottom:0;left:66px;width:min(275px,calc(100vw - 66px));z-index:44;transform:translateX(calc(-100% - 66px));transition:transform .26s var(--ease);box-shadow:14px 0 35px #0005}.app.menu-open .servers,.app.menu-open .sidebar{transform:translateX(0)}.menu-backdrop{display:block;position:fixed;inset:0;background:#0009;z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}.app.menu-open .menu-backdrop{opacity:1;pointer-events:auto}.chat{height:100dvh}.chat-header{height:59px;padding:0 12px;gap:8px}.mobile-menu{display:inline-grid}.header-main{gap:8px}.header-main .header-icon{display:none}.header-name small{max-width:185px}.header-tools .desktop-tool,.header-tools .sep{display:none}.header-tools .icon-btn{width:29px}.chat-scroll{padding:13px 18px 9px}.composer-wrap{padding:6px 10px max(76px,calc(env(safe-area-inset-bottom) + 64px))}.composer-tools .hint{display:none}.members{display:none}.bottom-tabs{position:fixed;bottom:0;left:0;right:0;z-index:12;background:#141516f5;backdrop-filter:blur(16px);border-top:1px solid #34363a;padding:7px 10px max(7px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}.bottom-tabs button{display:grid;place-items:center;gap:3px;padding:4px;border:0;background:none;color:#81858b;border-radius:8px;font-size:9px}.bottom-tabs button.active{background:#27292c;color:#f2f3f4}.bottom-tabs .icon{width:19px;height:19px}.toast-viewport{bottom:calc(85px + env(safe-area-inset-bottom));right:12px}.message-text{font-size:12px}.message{gap:9px;padding:9px 2px;margin:0 -2px}.message .avatar{width:30px;height:30px}.msg-toolbar{right:1px}.voice-stage{padding:18px 16px 90px}.voice-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.voice-tile{height:140px}.dialog{max-height:92dvh}.overlay{align-items:flex-end;padding:0}.dialog,.dialog.wide{width:100%;border-radius:16px 16px 0 0;max-height:90dvh}.dialog-head{padding:18px}.dialog-body{padding:18px}.dialog-foot{padding:13px 18px max(13px,env(safe-area-inset-bottom))}.message-text{max-width:100%}.chat-scroll{scroll-padding-bottom:20px}}
+@media(max-width:380px){.header-name small{max-width:130px}.composer-edit textarea{font-size:12px}.chat-scroll{padding:10px 12px}.voice-tile{height:128px}.composer-tools .minor .icon-btn:nth-child(3){display:none}.emoji-grid{grid-template-columns:repeat(6,1fr)}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+/* Explicitly constrain the desktop grid row so the composer stays inside the viewport. */
+@media(min-width:711px){.app{grid-template-rows:minmax(0,1fr)}.servers,.sidebar,.chat,.members{min-height:0}.servers,.sidebar,.chat{max-height:100dvh}}
+@media(max-width:710px){.message .msg-toolbar{opacity:.92;transform:none;pointer-events:auto;top:-9px;right:0}.message{padding-top:12px}.message .msg-toolbar .icon-btn{height:24px;width:24px}.message .msg-toolbar .icon{width:13px}.chat-scroll{overscroll-behavior:contain}}
+/* Keep message action tools inside the message hover target to avoid hover loss. */
+.msg-toolbar{top:2px;z-index:6}
+@media(max-width:710px){.message .msg-toolbar{top:2px}}
+.msg-toolbar{pointer-events:auto}
+@media(max-width:710px){.message .msg-toolbar .icon-btn:not(:last-child){display:none}.message .msg-toolbar{background:#242629b8;border-color:#41444a;box-shadow:0 3px 10px #0005}}
+
+#home-screen{background:var(--bg);color:var(--text);font:13px/1.52 Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif;}
+#home-screen .app{height:100%;}
+
+@media (prefers-reduced-motion: reduce) {
+  #login-screen .orbital-ring,
+  #login-screen .arc-moving,
+  #login-screen .scene-halo,
+  #home-screen .message {
+    animation-duration: .01ms !important;
+  }
+}
+  </style>
+</head>
+<body>
+  <!-- LOGIN -->
+  <div id="login-screen" aria-label="로그인">
+    <div class="ambient" aria-hidden="true"></div>
+    <div class="ambient-grid" aria-hidden="true"></div>
+    <header class="site-header">
+      <a class="brand" href="#" aria-label="LUNA Connect 홈" data-demo-link>
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M7.8 8.4a5 5 0 0 0 0 7.2M16.2 8.4a5 5 0 0 1 0 7.2M4.7 5.1a9.7 9.7 0 0 0 0 13.8M19.3 5.1a9.7 9.7 0 0 1 0 13.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="12" cy="12" r="1.6" fill="currentColor"/>
+        </svg>
+        <span class="brand-name">LUNA</span>
+        <span class="brand-divider" aria-hidden="true"></span>
+        <span class="brand-connect">CONNECT</span>
+      </a>
+      <div class="status"><span class="status-dot" aria-hidden="true"></span> CONNECTION READY</div>
+    </header>
+    <main class="main">
+      <div class="motion-scene" aria-hidden="true">
+        <div class="scene-halo"></div>
+        <div class="orbit-stage">
+          <div class="orbital-ring"></div><div class="orbital-ring"></div><div class="orbital-ring"></div>
+          <svg class="arc-svg" viewBox="0 0 750 750" focusable="false">
+            <defs>
+              <linearGradient id="movingArc" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#aab3c4" stop-opacity="0"/><stop offset="70%" stop-color="#cbd2e1" stop-opacity=".5"/><stop offset="100%" stop-color="#d6dcea" stop-opacity=".95"/></linearGradient>
+              <filter id="arcGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <circle class="arc-static" cx="375" cy="375" r="342" stroke-dasharray="2 22"/>
+            <circle class="arc-static" cx="375" cy="375" r="235" stroke-dasharray="1 15"/>
+            <circle class="arc-moving" cx="375" cy="375" r="326"/>
+            <circle class="arc-moving second" cx="375" cy="375" r="276"/>
+          </svg>
+          <div class="scene-cross cross-one"></div><div class="scene-cross cross-two"></div>
+        </div>
+      </div>
+      <div class="login-zone" id="login-zone">
+        <div class="card-light" aria-hidden="true"></div>
+        <section class="login-card" aria-labelledby="login-heading">
+          <div class="security-line">
+            <div class="logo-pulse" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path class="wave wave-1" d="M6.5 8.5a5 5 0 0 0 0 7"/>
+                <path class="wave wave-2" d="M17.5 8.5a5 5 0 0 1 0 7"/>
+                <path class="wave wave-1" d="M3.7 5.5a9.1 9.1 0 0 0 0 13"/>
+                <path class="wave wave-2" d="M20.3 5.5a9.1 9.1 0 0 1 0 13"/>
+                <circle class="center-dot" cx="12" cy="12" r="1.8"/>
+              </svg>
+            </div>
+            <div class="secure-caption">
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3.5" y="6.5" width="9" height="7" rx="1.5" stroke="currentColor"/><path d="M5.5 6.5V4a2.5 2.5 0 0 1 5 0v2.5" stroke="currentColor"/></svg>
+              SECURE SPACE
+            </div>
+          </div>
+          <p class="eyebrow">YOUR SPACE TO CONNECT</p>
+          <div class="welcome-block" id="welcome-block">
+            <h1 id="login-heading">다시 만나서 반가워요.</h1>
+            <p class="subtitle" id="login-subtitle">로그인하고 나만의 공간으로 돌아오세요.</p>
+          </div>
+          <div class="signal-display" aria-hidden="true">
+            <svg viewBox="0 0 230 26" preserveAspectRatio="none">
+              <path class="wave-base" d="M1 13 H60 L66 13 L72 8 L78 18 L84 6 L90 21 L96 11 L101 13 H125 L132 12 L138 13 H160 L166 9 L173 17 L180 13 H229"/>
+              <path class="wave-blur" d="M1 13 H60 L66 13 L72 8 L78 18 L84 6 L90 21 L96 11 L101 13 H125 L132 12 L138 13 H160 L166 9 L173 17 L180 13 H229"/>
+              <path class="wave-scan" d="M1 13 H60 L66 13 L72 8 L78 18 L84 6 L90 21 L96 11 L101 13 H125 L132 12 L138 13 H160 L166 9 L173 17 L180 13 H229"/>
+            </svg>
+            <span class="signal-label">LUNA / 01</span>
+          </div>
+          <form id="login-form" novalidate>
+            <div class="field">
+              <div class="field-header"><label for="identity">사용자명 또는 이메일</label></div>
+              <div class="input-shell" id="identity-shell">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="10" cy="6.5" r="3"/><path d="M3.5 17v-.7c0-3.2 2.9-5.2 6.5-5.2s6.5 2 6.5 5.2v.7"/></svg>
+                <input id="identity" name="identity" type="text" placeholder="사용자명 또는 이메일 입력" autocomplete="username" required>
+              </div>
+            </div>
+            <div class="field">
+              <div class="field-header"><label for="password">비밀번호</label><a class="text-link" href="#" data-demo-link>비밀번호 찾기</a></div>
+              <div class="input-shell" id="password-shell">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><rect x="3.8" y="8.5" width="12.4" height="9" rx="1.8"/><path d="M6.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5"/></svg>
+                <input id="password" name="password" type="password" placeholder="비밀번호 입력" autocomplete="current-password" required>
+                <button class="eye-button" id="password-toggle" type="button" aria-label="비밀번호 표시" aria-pressed="false" title="비밀번호 표시">
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z"/><circle cx="10" cy="10" r="2.4"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="login-slot" id="login-slot">
+              <button type="submit" id="login-button" class="login-button" aria-label="로그인">
+                <span>로그인</span>
+                <svg class="btn-arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10H16m0 0-5-5m5 5-5 5"/></svg>
+              </button>
+            </div>
+            <div id="form-error" class="error-text" role="status" aria-live="polite"></div>
+          </form>
+          <p class="demo-note">모션 인터랙션 미리보기 · <strong>비어 있지 않은 아이디·비밀번호면 로그인됩니다.</strong></p>
+          <div class="card-footer">처음 오셨나요? <a href="#" data-demo-link>계정 만들기</a></div>
+        </section>
+        <p class="small-caption">✧ A LITTLE CLOSER, TOGETHER. ✧</p>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="footer-note">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg>
+        LUNA CONNECT → FORMA HOME / MORPH DEMO
+      </div>
+    </footer>
+    <div class="toast" id="login-toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <!-- HOME (Forma Connect) -->
+  <div id="home-screen" aria-hidden="true">
+<div class="app" id="app">
+  <div class="menu-backdrop" id="menuBackdrop" aria-hidden="true"></div>
+  <aside class="servers" aria-label="서버 목록">
+    <button type="button" class="brand-cube" id="home-brand-cube" data-action="home" aria-label="Forma 홈" title="Forma 홈"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m12 2 9 5v10l-9 5-9-5V7zM3 7l9 5 9-5M12 12v10"/></svg></button>
+    <span class="rail-rule"></span><div id="serverList" style="display:grid;gap:11px"></div>
+    <button type="button" class="server-item utility" data-action="add-server" aria-label="서버 추가" title="새 서버 추가" data-icon="plus"></button>
+    <span class="rail-rule"></span><button type="button" class="server-item utility" data-action="explore" title="서버 탐색" aria-label="서버 탐색" data-icon="compass"></button>
+    <div class="rail-bottom"><button type="button" class="icon-btn" data-action="help" title="도움말" aria-label="도움말" data-icon="circle-help"></button><span class="rail-online" title="데모 모드"></span></div>
+  </aside>
+  <aside class="sidebar" aria-label="채널 탐색">
+    <div class="workspace-header"><div class="workspace-heading"><span class="eyebrow" id="workspaceTag">FORMA / WORKSPACE</span><strong id="workspaceName">Forma Studio</strong><small class="subline" id="workspaceSub">디자인과 기술을 연결하는 공간</small></div><button class="icon-btn" data-action="workspace-menu" title="워크스페이스 메뉴" aria-label="워크스페이스 메뉴" data-icon="chevron-down"></button></div>
+    <div class="nav-scroll"><label class="nav-search" aria-label="채널 필터"><span data-icon="search"></span><input id="channelFilter" placeholder="채널 또는 사람 검색" autocomplete="off"><kbd>⌘K</kbd></label><div id="channelNav"></div></div>
+    <div class="sidebar-footer"><div class="voice-connected" id="voiceConnected"><span class="signal" data-icon="audio-lines"></span><div style="flex:1;min-width:0"><b>음성 연결됨 · 데모</b><small id="connectedChannelName">라운지</small></div><button class="icon-btn" data-action="leave-voice" title="연결 종료" aria-label="음성 연결 종료" data-icon="phone-off"></button></div><div class="user-footer"><button type="button" data-user="me" class="avatar" id="myAvatar" style="border-radius:10px" aria-label="내 프로필">J</button><div class="user-meta"><strong>Jump</strong><small id="userStatus">온라인 · 데모 세션</small></div><div class="footer-actions"><button class="icon-btn" data-action="mute" id="muteButton" title="마이크 음소거" aria-label="마이크 음소거" data-icon="mic"></button><button class="icon-btn" data-action="deafen" id="deafenButton" title="헤드폰 음소거" aria-label="헤드폰 음소거" data-icon="headphones"></button><button class="icon-btn" data-action="settings" title="설정" aria-label="설정" data-icon="settings"></button></div></div></div>
+  </aside>
+  <main class="chat" id="chatRegion">
+    <header class="chat-header"><div class="header-main"><button class="icon-btn mobile-menu" data-action="mobile-menu" aria-label="서버·채널 목록" title="서버·채널 목록" data-icon="menu"></button><div class="header-icon" id="headerIcon" data-icon="hash"></div><div class="header-name"><b id="headerTitle">일반 채팅</b><small id="headerSubtitle">모두와 대화할 수 있는 공간</small></div></div>
+      <div class="header-tools"><button class="icon-btn desktop-tool" data-action="invite" title="초대 링크" aria-label="초대 링크" data-icon="user-plus"></button><button class="icon-btn desktop-tool" data-action="pins" title="고정된 메시지" aria-label="고정된 메시지" data-icon="pin"></button><button class="icon-btn desktop-tool" data-action="notifications" title="알림 센터" aria-label="알림 센터" data-icon="bell"></button><span class="sep"></span><button class="icon-btn" data-action="search" title="메시지 검색 (Ctrl+F)" aria-label="검색" data-icon="search"></button><button class="icon-btn" data-action="members" id="membersToggle" title="멤버 목록" aria-label="멤버 목록" data-icon="users"></button><button class="icon-btn desktop-tool" data-action="inbox" title="활동과 멘션" aria-label="활동과 멘션" data-icon="inbox"></button></div>
+    </header>
+    <section class="chat-scroll" id="chatScroll" aria-label="채팅 메시지" role="log" aria-live="off"></section>
+    <section class="voice-stage" id="voiceStage" hidden aria-label="음성 채널"></section>
+    <div class="composer-wrap" id="composerWrap"><div class="composer-status" id="typingLine"></div><div class="composer"><div class="replying" id="replying"><span data-icon="corner-up-left"></span><span id="replyingText">답장</span><button class="icon-btn" data-action="cancel-reply" aria-label="답장 취소" data-icon="x"></button></div><div class="attachment-preview" id="attachmentPreview"><span data-icon="paperclip"></span><span id="attachmentName"></span><button class="icon-btn" data-action="cancel-attachment" aria-label="첨부 취소" data-icon="x"></button></div><div class="composer-edit"><button class="icon-btn" data-action="attach" aria-label="파일 첨부" title="파일 첨부" data-icon="plus-circle"></button><textarea id="messageInput" aria-label="메시지 입력" rows="1" placeholder="#일반-채팅 에 메시지 보내기"></textarea><button class="icon-btn" data-action="emoji" title="이모지" aria-label="이모지" data-icon="smile"></button><button class="composer-send" data-action="send" title="메시지 전송 (Enter)" aria-label="메시지 전송" data-icon="arrow-up"></button></div><div class="composer-tools"><div class="minor"><button class="icon-btn" data-action="poll" aria-label="투표 만들기" title="투표 만들기" data-icon="list-checks"></button><button class="icon-btn" data-action="gif" aria-label="GIF 미리보기" title="GIF 미리보기" data-icon="image"></button><button class="icon-btn" data-action="format" aria-label="서식 도움말" title="서식 도움말" data-icon="code"></button></div><span class="hint">Enter 전송 · Shift + Enter 줄바꿈</span></div></div></div>
+  </main>
+  <aside class="members" id="membersPanel" aria-label="멤버 목록"><div class="members-header"><strong>멤버</strong><button class="icon-btn" data-action="members" aria-label="멤버 목록 닫기" title="목록 닫기" data-icon="panel-right-close"></button></div><div id="memberList"></div><div class="members-footer">FORMA CONNECT · DESIGN PREVIEW<br>이 화면의 유저·음성·메시지는 데모 데이터입니다.</div></aside>
+  <nav class="bottom-tabs" aria-label="모바일 메뉴"><button type="button" data-action="mobile-menu" id="bottomServers"><span data-icon="layers"></span>서버</button><button type="button" data-action="bottom-chat" class="active" id="bottomChat"><span data-icon="hash"></span>채팅</button><button type="button" data-action="home" id="bottomDms"><span data-icon="message-circle"></span>DM</button><button type="button" data-action="notifications" id="bottomInbox"><span data-icon="bell"></span>알림</button></nav>
+</div>
+<div class="overlay" id="overlay" aria-hidden="true"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle" id="dialog"><div class="dialog-head"><div><div class="eyebrow" id="modalEyebrow">FORMA CONNECT</div><h2 id="modalTitle">Dialog</h2><p id="modalSubtitle"></p></div><button class="icon-btn" data-action="close-modal" title="닫기" aria-label="닫기" data-icon="x"></button></div><div class="dialog-body" id="modalBody"></div><div class="dialog-foot" id="modalFoot"></div></div></div>
+<div class="toast-viewport" id="toastViewport" role="status" aria-live="polite"></div>
+<input type="file" id="fileInput" hidden accept="image/*,.pdf,.txt,.zip,.json,.md,.js,.html,.css">
+  </div>
+
+  <!-- Shared morph actor -->
+  <div id="morph-actor" aria-hidden="true" data-phase="welcome">
+    <div class="morph-inner" id="morph-inner"></div>
+  </div>
+
+  <script>
+  /* ===== Login morph controller ===== */
+  (function () {
+    'use strict';
+    var loginScreen = document.getElementById('login-screen');
+    var homeScreen = document.getElementById('home-screen');
+    var welcomeBlock = document.getElementById('welcome-block');
+    var loginButton = document.getElementById('login-button');
+    var form = document.getElementById('login-form');
+    var identity = document.getElementById('identity');
+    var password = document.getElementById('password');
+    var identityShell = document.getElementById('identity-shell');
+    var passwordShell = document.getElementById('password-shell');
+    var passwordToggle = document.getElementById('password-toggle');
+    var errorText = document.getElementById('form-error');
+    var toast = document.getElementById('login-toast');
+    var actor = document.getElementById('morph-actor');
+    var morphInner = document.getElementById('morph-inner');
+    var loginZone = document.getElementById('login-zone');
+    // Demo intentionally keeps full morph timing even if OS asks for reduced motion.
+    var reduceMotion = false;
+    var phase = 'idle'; // idle | to-button | armed | verifying | done
+    var toastTimer = null;
+    var morphRun = 0;
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2600);
+    }
+    function delay(ms) {
+      return new Promise(function (resolve) {
+        setTimeout(resolve, reduceMotion ? Math.min(ms, 80) : ms);
+      });
+    }
+    function rectOf(el) {
+      var r = el.getBoundingClientRect();
+      return { left: r.left, top: r.top, width: r.width, height: r.height };
+    }
+    function placeActor(r) {
+      actor.style.left = r.left + 'px';
+      actor.style.top = r.top + 'px';
+      actor.style.width = r.width + 'px';
+      actor.style.height = r.height + 'px';
+    }
+    function animateActor(toRect, opts) {
+      opts = opts || {};
+      var duration = reduceMotion ? 40 : (opts.duration || 780);
+      var easing = opts.easing || 'cubic-bezier(.65,0,.16,1)';
+      return new Promise(function (resolve) {
+        var props = {
+          left: toRect.left + 'px',
+          top: toRect.top + 'px',
+          width: toRect.width + 'px',
+          height: toRect.height + 'px'
+        };
+        if (opts.borderRadius != null) props.borderRadius = opts.borderRadius;
+        var anim = actor.animate([props], { duration: duration, easing: easing, fill: 'forwards' });
+        anim.onfinish = function () {
+          placeActor(toRect);
+          if (opts.borderRadius != null) actor.style.borderRadius = opts.borderRadius;
+          try { anim.cancel(); } catch (e) {}
+          resolve();
+        };
+      });
+    }
+    function setPhaseAttr(p, html) {
+      actor.setAttribute('data-phase', p);
+      if (html != null) morphInner.innerHTML = html;
+    }
+    function bothFilled() {
+      return identity.value.trim().length > 0 && password.value.trim().length > 0;
+    }
+    function welcomeHTML() {
+      return '<div class="morph-title">다시 만나서 반가워요.</div><div class="morph-sub">로그인하고 나만의 공간으로 돌아오세요.</div>';
+    }
+    function buttonHTML() {
+      return '<span>로그인</span><svg style="width:17px;height:17px;flex:none" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10H16m0 0-5-5m5 5-5 5"/></svg>';
+    }
+    function verifyingHTML() {
+      return '<span class="scan-stack" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>입력정보를 확인중</span>';
+    }
+    function checkHTML() {
+      return '<svg class="check-svg" viewBox="0 0 30 30" aria-hidden="true"><path d="M7 15.3 12.6 21 23 9"/></svg>';
+    }
+    function cubeHTML() {
+      return '<svg class="check-svg" viewBox="0 0 30 30" aria-hidden="true"><path d="M7 15.3 12.6 21 23 9"/></svg>' +
+        '<svg class="cube-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 9 5v10l-9 5-9-5V7zM3 7l9 5 9-5M12 12v10"/></svg>';
+    }
+    function clearFieldError() {
+      identityShell.classList.remove('error');
+      passwordShell.classList.remove('error');
+      errorText.textContent = '';
+    }
+    function showFieldError(message, shell) {
+      clearFieldError();
+      if (shell) shell.classList.add('error');
+      errorText.textContent = message;
+    }
+
+    async function morphWelcomeToButton(runId) {
+      if (phase !== 'idle') return;
+      phase = 'to-button';
+      homeScreen.classList.add('is-ready');
+
+      var welcomeRect = rectOf(welcomeBlock);
+      var buttonRect = rectOf(loginButton);
+
+      placeActor(welcomeRect);
+      setPhaseAttr('welcome', welcomeHTML());
+      actor.classList.add('is-live');
+      actor.style.pointerEvents = 'none';
+      welcomeBlock.classList.add('is-morphing');
+      await delay(30);
+      if (runId !== morphRun) return;
+
+      setPhaseAttr('button', buttonHTML());
+      loginButton.classList.add('is-replaced');
+      await animateActor(buttonRect, { duration: 920, easing: 'cubic-bezier(.65,0,.16,1)', borderRadius: '6px' });
+      if (runId !== morphRun) return;
+
+      phase = 'armed';
+      actor.classList.add('is-interactive');
+      actor.style.pointerEvents = 'auto';
+      actor.setAttribute('role', 'button');
+      actor.setAttribute('aria-label', '로그인');
+      actor.setAttribute('tabindex', '0');
+      // Continue into verify automatically so the morph feels one continuous sequence.
+      var contId = runId;
+      delay(550).then(function () {
+        if (contId === morphRun && phase === 'armed') runVerifyAndEnter(contId);
+      });
+    }
+
+    function resetWelcomeMorph() {
+      morphRun += 1;
+      phase = 'idle';
+      actor.classList.remove('is-live');
+      actor.classList.remove('is-interactive');
+      actor.style.cssText = '';
+      actor.removeAttribute('role');
+      actor.removeAttribute('aria-label');
+      actor.removeAttribute('tabindex');
+      actor.setAttribute('data-phase', 'welcome');
+      morphInner.innerHTML = '';
+      welcomeBlock.classList.remove('is-morphing');
+      loginButton.classList.remove('is-replaced');
+      loginButton.disabled = false;
+    }
+
+    async function runVerifyAndEnter(runId) {
+      if (phase !== 'armed' && phase !== 'to-button') return;
+      // wait if still morphing to button
+      while (phase === 'to-button') {
+        await delay(40);
+        if (runId !== morphRun) return;
+      }
+      if (phase !== 'armed') return;
+      if (!bothFilled()) {
+        if (!identity.value.trim()) showFieldError('사용자명 또는 이메일을 입력해 주세요.', identityShell);
+        else showFieldError('비밀번호를 입력해 주세요.', passwordShell);
+        return;
+      }
+
+      phase = 'verifying';
+      clearFieldError();
+      loginButton.disabled = true;
+      form.setAttribute('aria-busy', 'true');
+      actor.classList.remove('is-interactive');
+      actor.style.pointerEvents = 'none';
+      actor.removeAttribute('tabindex');
+
+      var buttonRect = rectOf(loginButton);
+      // Ensure actor sits on button slot
+      placeActor(buttonRect);
+
+      // Verifying pill
+      setPhaseAttr('verifying', verifyingHTML());
+      var verifyRect = {
+        left: buttonRect.left + (buttonRect.width - Math.min(252, buttonRect.width)) / 2,
+        top: buttonRect.top - 3,
+        width: Math.min(252, buttonRect.width),
+        height: 52
+      };
+      await animateActor(verifyRect, { duration: 720, easing: 'cubic-bezier(.65,0,.16,1)', borderRadius: '28px' });
+      if (runId !== morphRun) return;
+      await delay(1350);
+      if (runId !== morphRun) return;
+
+      // Checkmark
+      var checkRect = {
+        left: buttonRect.left + buttonRect.width / 2 - 33,
+        top: buttonRect.top + buttonRect.height / 2 - 33,
+        width: 66,
+        height: 66
+      };
+      setPhaseAttr('check', checkHTML());
+      await animateActor(checkRect, { duration: 760, easing: 'cubic-bezier(.22,1,.36,1)', borderRadius: '50%' });
+      if (runId !== morphRun) return;
+      await delay(900);
+      if (runId !== morphRun) return;
+
+      // Fly to brand cube + reveal home
+      homeScreen.classList.add('is-ready');
+      var brandCube = document.getElementById('home-brand-cube');
+      brandCube.classList.add('is-receiving');
+      // Force layout while home is measurable
+      homeScreen.style.visibility = 'hidden';
+      homeScreen.style.opacity = '0';
+      homeScreen.style.pointerEvents = 'none';
+      homeScreen.style.display = 'block';
+      var cubeRect = rectOf(brandCube);
+
+      setPhaseAttr('cube', cubeHTML());
+      homeScreen.classList.add('is-visible');
+      homeScreen.style.visibility = '';
+      homeScreen.style.opacity = '';
+      homeScreen.style.pointerEvents = '';
+      homeScreen.style.display = '';
+      homeScreen.setAttribute('aria-hidden', 'false');
+      loginScreen.classList.add('is-exiting');
+
+      await animateActor(cubeRect, { duration: 1000, easing: 'cubic-bezier(.18,1,.28,1)', borderRadius: '12px' });
+      if (runId !== morphRun) return;
+      await delay(180);
+
+      brandCube.classList.remove('is-receiving');
+      actor.classList.remove('is-live');
+      actor.classList.remove('is-interactive');
+      actor.style.cssText = '';
+      actor.setAttribute('data-phase', 'welcome');
+      morphInner.innerHTML = '';
+
+      await delay(350);
+      loginScreen.hidden = true;
+      loginScreen.setAttribute('aria-hidden', 'true');
+      phase = 'done';
+      form.removeAttribute('aria-busy');
+    }
+
+    function onFieldsChanged() {
+      if (phase === 'verifying' || phase === 'done') return;
+      clearFieldError();
+      if (bothFilled()) {
+        if (phase === 'idle') {
+          var id = ++morphRun;
+          morphWelcomeToButton(id);
+        }
+      } else if (phase === 'armed' || phase === 'to-button') {
+        resetWelcomeMorph();
+      }
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!bothFilled()) {
+        if (!identity.value.trim()) showFieldError('사용자명 또는 이메일을 입력해 주세요.', identityShell);
+        else showFieldError('비밀번호를 입력해 주세요.', passwordShell);
+        return;
+      }
+      var id = morphRun;
+      if (phase === 'idle') {
+        id = ++morphRun;
+        morphWelcomeToButton(id).then(function () { return runVerifyAndEnter(id); });
+      } else {
+        runVerifyAndEnter(id);
+      }
+    });
+
+    actor.addEventListener('click', function () {
+      if (phase === 'armed') runVerifyAndEnter(morphRun);
+    });
+    actor.addEventListener('keydown', function (e) {
+      if ((e.key === 'Enter' || e.key === ' ') && phase === 'armed') {
+        e.preventDefault();
+        runVerifyAndEnter(morphRun);
+      }
+    });
+
+    [identity, password].forEach(function (field) {
+      field.addEventListener('input', onFieldsChanged);
+    });
+    passwordToggle.addEventListener('click', function () {
+      var show = password.type === 'password';
+      password.type = show ? 'text' : 'password';
+      passwordToggle.setAttribute('aria-pressed', String(show));
+      passwordToggle.setAttribute('aria-label', show ? '비밀번호 숨기기' : '비밀번호 표시');
+      passwordToggle.title = show ? '비밀번호 숨기기' : '비밀번호 표시';
+    });
+    loginZone.addEventListener('pointermove', function (event) {
+      var bounds = loginZone.getBoundingClientRect();
+      loginZone.style.setProperty('--pointer-x', ((event.clientX - bounds.left) / bounds.width * 100).toFixed(1) + '%');
+      loginZone.style.setProperty('--pointer-y', ((event.clientY - bounds.top) / bounds.height * 100).toFixed(1) + '%');
+    });
+    document.querySelectorAll('#login-screen [data-demo-link]').forEach(function (link) {
+      link.addEventListener('click', function (event) {
+        event.preventDefault();
+        showToast('이 항목은 디자인 데모입니다.');
+      });
+    });
+  })();
+  </script>
+  <script>
+  /* ===== Forma Connect app ===== */
+(() => {
+'use strict';
+const paths={
+'plus':'<path d="M12 5v14M5 12h14"/>','x':'<path d="M5 5l14 14M19 5 5 19"/>','chevron-down':'<path d="m6 9 6 6 6-6"/>','chevron-right':'<path d="m9 6 6 6-6 6"/>','hash':'<path d="M5 9h14M4 15h14M11 3 7 21M18 3l-4 18"/>','search':'<circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/>','users':'<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6M17 14a5 5 0 0 1 4 5"/>','user-plus':'<path d="M16 21v-2a5 5 0 0 0-10 0v2M11 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6M17 11h6"/>','pin':'<path d="m16 3 5 5-4 2 1 5-4 2-4-4-6 8 8-10-3-3 2-4 5 1Z"/>','bell':'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/>','inbox':'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 13h5l2 3h4l2-3h5"/>','settings':'<circle cx="12" cy="12" r="3"/><path d="M19 14.5l2-2-2-2-.4-2 1-2-2-2-2 1-2-.5-2-2-2 2-2 .5-2-1-2 2 1 2-.5 2-2 2 2 2 .5 2-1 2 2 2 2-1 2 .5 2 2 2-2 2-.5 2 1 2-2-1-2z"/>','mic':'<rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8"/>','mic-off':'<path d="M2 2l20 20M9 9v3a3 3 0 0 0 4.8 2.4M15 9V5a3 3 0 0 0-5.7-1.3M5 10a7 7 0 0 0 12 5.3M19 10a7 7 0 0 1-1.2 4M12 17v5M8 22h8"/>','headphones':'<path d="M3 14v-3a9 9 0 0 1 18 0v3M3 14v6h5v-8H3M21 14v6h-5v-8h5"/>','headphones-off':'<path d="M3 14v-3a9 9 0 0 1 15-6.5M3 14v6h5v-8H3M21 14v6h-5v-8h5M2 2l20 20"/>','phone-off':'<path d="m3 3 18 18M8.4 4.8a13 13 0 0 1 9 2.3l2 3-3 3-2.6-1.5M10 14l-2.7-1.4L5 15l3 4a15 15 0 0 0 7.2 2"/>','audio-lines':'<path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"/>','menu':'<path d="M4 6h16M4 12h16M4 18h16"/>','arrow-up':'<path d="M12 19V5m-7 7 7-7 7 7"/>','plus-circle':'<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>','smile':'<circle cx="12" cy="12" r="9"/><path d="M8 14c2 3 6 3 8 0M9 9h.01M15 9h.01"/>','paperclip':'<path d="m21 11-9 9a6 6 0 0 1-8-8l10-10a4 4 0 0 1 6 6l-10 10a2 2 0 0 1-3-3l9-9"/>','corner-up-left':'<path d="M9 14 4 9l5-5M4 9h11a5 5 0 0 1 5 5v6"/>','list-checks':'<path d="m3 7 2 2 4-4M12 7h9M3 17l2 2 4-4M12 17h9"/>','image':'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>','code':'<path d="m8 6-6 6 6 6M16 6l6 6-6 6M14 3 10 21"/>','compass':'<circle cx="12" cy="12" r="9"/><path d="m16 8-3 5-5 3 3-5z"/>','circle-help':'<circle cx="12" cy="12" r="9"/><path d="M9.7 9a2.5 2.5 0 1 1 4.3 2c-1 1-2 1.5-2 3M12 17h.01"/>','layers':'<path d="m12 2 10 6-10 6L2 8l10-6ZM2 12l10 6 10-6M2 16l10 6 10-6"/>','message-circle':'<path d="M21 11a9 9 0 0 1-9 9c-1.7 0-3.3-.5-4.6-1.2L3 21l1.4-5A9 9 0 1 1 21 11Z"/>','lock':'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>','shield':'<path d="m12 2 9 4v6c0 5-3 8-9 10-6-2-9-5-9-10V6z"/><path d="m8 12 3 3 5-6"/>','file-text':'<path d="M14 2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9zM14 2v7h7M8 13h8M8 17h8"/>','at-sign':'<circle cx="12" cy="12" r="4"/><path d="M16 8v6a3 3 0 0 0 6 0v-2a10 10 0 1 0-3 7"/>','volume-2':'<path d="M11 5 6 9H3v6h3l5 4zM15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"/>','volume-x':'<path d="M11 5 6 9H3v6h3l5 4zM16 9l5 6M21 9l-5 6"/>','video':'<rect x="2" y="5" width="14" height="14" rx="2"/><path d="m16 10 6-4v12l-6-4"/>','video-off':'<path d="M2 2l20 20M12 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12M16 9l6-3v12l-3-2"/>','monitor':'<rect x="2" y="3" width="20" height="15" rx="2"/><path d="M8 22h8M12 18v4"/>','edit':'<path d="m12 20 9-9-4-4-9 9-2 6zM15 9l4 4"/>','trash':'<path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15M10 10v7M14 10v7"/>','copy':'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>','star':'<path d="m12 2 3 6 7 .9-5.1 4.9 1.3 7-6.2-3.3-6.2 3.3 1.3-7L2 9l7-.9z"/>','more-horizontal':'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>','check':'<path d="m5 12 5 5L20 7"/>','check-circle':'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-5"/>','clock':'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>','send':'<path d="m22 2-7 20-4-9-9-4zM22 2 11 13"/>','sparkles':'<path d="m12 2 2 7 7 2-7 2-2 7-2-7-7-2 7-2zM19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8z"/>','panel-right-close':'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18M11 10l-2 2 2 2"/>','list':'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>','folder-plus':'<path d="M3 7h6l2 3h10v10H3zM16 13v6M13 16h6"/>','arrow-left':'<path d="m12 19-7-7 7-7M5 12h14"/>','radio':'<circle cx="12" cy="12" r="2"/><path d="M8 8a5.7 5.7 0 0 0 0 8m8-8a5.7 5.7 0 0 1 0 8M5 5a10 10 0 0 0 0 14m14-14a10 10 0 0 1 0 14"/>','external-link':'<path d="M12 5H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-8M14 2h8v8M22 2 11 13"/>'};
+const ic=(name,klass='')=>'<svg class="icon '+klass+'" aria-hidden="true" viewBox="0 0 24 24">'+(paths[name]||paths['circle-help'])+'</svg>';
+document.querySelectorAll('[data-icon]').forEach(el=>{el.innerHTML=ic(el.getAttribute('data-icon'));});
+const $=(s,root=document)=>root.querySelector(s), $$=(s,root=document)=>Array.from(root.querySelectorAll(s));
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+const formatTime=ts=>new Date(ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
+const safeCopy=s=>navigator.clipboard&&window.isSecureContext?navigator.clipboard.writeText(s).catch(()=>fallbackCopy(s)):fallbackCopy(s);
+function fallbackCopy(s){let el=document.createElement('textarea');el.value=s;el.style.position='fixed';el.style.opacity='0';document.body.append(el);el.select();try{document.execCommand('copy');}catch(e){}el.remove()}
+const users={me:{name:'Jump',initial:'J',color:'#44484c',role:'OWNER',status:'online',bio:'디자인과 개발을 연결하는 작업 공간을 만들고 있습니다.'},seo:{name:'서연',initial:'서',color:'#414853',role:'ADMIN',status:'online',bio:'프로덕트 디자이너 · 시스템과 인터랙션을 설계합니다.'},do:{name:'도윤',initial:'도',color:'#434842',role:'DEV',status:'online',bio:'프론트엔드 개발자 · 모든 작은 상호작용을 좋아합니다.'},mina:{name:'민아',initial:'민',color:'#4c4348',role:'DESIGN',status:'away',bio:'인터랙션 디자이너. 오늘은 설정 화면을 다듬는 중.'},jun:{name:'준호',initial:'준',color:'#4a4840',role:'MEMBER',status:'online',bio:'프로젝트에 참여 중입니다.'},hay:{name:'하린',initial:'하',color:'#41464a',role:'MEMBER',status:'offline',bio:'콘텐츠와 문서를 정리합니다.'},bot:{name:'Forma Bot',initial:'F',color:'#3c4241',role:'BOT',status:'online',bio:'자동화와 도움말을 지원하는 시뮬레이션 봇입니다.'}};
+const initialServers=[
+{id:'forma',name:'Forma Studio',abbr:'F',subtitle:'디자인과 기술을 연결하는 공간',groups:[{name:'INFORMATION',type:'text',channels:[{id:'notice',name:'공지사항',desc:'업데이트와 공지'},{id:'guide',name:'시작하기',desc:'커뮤니티 안내'}]},{name:'COMMUNITY',type:'text',channels:[{id:'general',name:'일반-채팅',desc:'모두와 자유롭게 대화하는 채널'},{id:'projects',name:'프로젝트-공유',desc:'만든 결과물을 공유해요'},{id:'questions',name:'질문-답변',desc:'궁금한 것을 남겨주세요'},{id:'ideas',name:'아이디어',desc:'떠오르는 생각을 기록해요'}]},{name:'VOICE CHANNELS',type:'voice',channels:[{id:'lounge',name:'라운지',desc:'편하게 이야기하는 음성 공간'},{id:'focus',name:'집중-작업실',desc:'함께 작업하는 공간'}]}]},
+{id:'design',name:'Design Circle',abbr:'D',subtitle:'작은 디테일이 만드는 차이',groups:[{name:'DESIGN',type:'text',channels:[{id:'talk',name:'디자인-토크',desc:'UI·UX 이야기'},{id:'showcase',name:'작업물-공유',desc:'진행 중인 디자인 공유'},{id:'feedback',name:'피드백',desc:'서로의 화면 리뷰'}]},{name:'VOICE',type:'voice',channels:[{id:'meeting',name:'리뷰-룸',desc:'디자인 리뷰 미팅'}]}]},
+{id:'dev',name:'Dev Network',abbr:'DEV',subtitle:'코드와 서비스를 함께 만드는 곳',groups:[{name:'ENGINEERING',type:'text',channels:[{id:'dev-general',name:'일반',desc:'개발 자유 채팅'},{id:'frontend',name:'프론트엔드',desc:'웹과 UI 구현'},{id:'backend',name:'백엔드',desc:'서비스와 API'},{id:'review',name:'코드-리뷰',desc:'서로 코드를 리뷰해요'}]},{name:'VOICE',type:'voice',channels:[{id:'pair',name:'페어-프로그래밍',desc:'함께 코딩하는 자리'}]}]}
+];
+const seed=(author,text,minutesAgo,extra={})=>({id:'m'+Math.random().toString(36).slice(2,10),author,text,time:Date.now()-minutesAgo*60000,reactions:{},pinned:false,replies:[],...extra});
+const msgs={
+'forma:notice':[seed('bot','**Forma Studio 업데이트**\n이번 버전에는 새로운 서버·채널·DM·음성 UI와 마이크로 인터랙션이 추가됐어요.\n\n이 페이지는 디자인 및 동작 검토용 로컬 데모입니다.',172,{pinned:true,embed:{title:'Forma Connect · UI System',desc:'미니멀 모노크롬 커뮤니티 · 반응형 레이아웃 · 컴포넌트 인터랙션',tags:['Dark theme','UI Preview','v1.0']}}),seed('seo','공지 채널은 새 소식과 릴리스 노트를 정리하는 공간입니다. 필요한 소식은 고정해 둘게요.',165)],
+'forma:guide':[seed('bot','환영합니다. 왼쪽의 서버·채널에서 원하는 공간을 선택하세요.\n• Enter로 메시지 전송, Shift+Enter로 줄바꿈\n• Ctrl+K로 빠른 이동\n• Ctrl+F로 메시지 검색\n• 메시지에 마우스를 올려 답장·반응·고정을 테스트할 수 있어요.',300,{reactions:{'👋':['seo','do']}})],
+'forma:general':[seed('seo','새로운 Forma Connect 화면을 열었어요. 기존 콘솔 테마에 맞춰 여백과 대비를 맞췄습니다.',72,{reactions:{'✨':['do','mina'],'👍':['jun']}}),seed('do','채널 전환이 꽤 빠르네요. 작은 버튼도 각각 반응하도록 구성된 게 좋습니다.',65,{reactions:{'👍':['seo']}}),seed('mina','오른쪽 멤버 리스트와 상단 툴바까지 모두 모노크롬으로 맞추면 전체 균형이 좋을 것 같아요.',55),seed('bot','**데모 기능 안내**\n메시지 전송, 반응, 스레드, 투표, 채널 생성, 음성 참여, DM, 검색과 설정을 직접 테스트해 보세요. 실제 서버나 통화 서비스에는 연결되지 않습니다.',35,{embed:{title:'INTERACTIVE DESIGN SYSTEM',desc:'사용 가능한 채팅 기능을 한 곳에 모았습니다. 버튼을 누르면 화면에 상태가 반영됩니다.',tags:['실행 가능','로컬 데모','모바일 대응']},reactions:{'❤️':['seo'],'👀':['do']}}),seed('jun','다음 스프린트에서 어떤 기능을 먼저 다듬으면 좋을까요?',19,{poll:{question:'가장 먼저 개선할 기능은?',options:['실시간 채팅 UI','음성 채널 UX','권한 · 서버 설정'],votes:[5,3,2],voters:{}}}),seed('seo','키보드 조작과 모바일 하단 메뉴를 우선 다듬고 있어요.',8,{reactions:{'✅':['do','jun']}})],
+'forma:projects':[seed('do','오늘 제작한 관리 대시보드 디자인 공유합니다.',170,{embed:{title:'SERVER CONSOLE / UI PREVIEW',desc:'상태 카드 · 필터형 로그 · 반응형 테이블 · 단축키 액션',tags:['Dashboard','CSS Variables','Interactive']},reactions:{'🔥':['seo','mina']}}),seed('mina','카드와 패널마다 같은 1px 테두리를 써서 전체가 통일된 느낌이에요.',93)],
+'forma:questions':[seed('jun','새로운 채널은 어떻게 만들 수 있나요?',98),seed('bot','채널 분류 오른쪽 `+` 버튼으로 새 텍스트 또는 음성 채널을 추가할 수 있습니다. **실제 서버가 아니라 로컬 데모 데이터**로 관리돼요.',91,{replyTo:'준호'})],
+'forma:ideas':[seed('mina','설정에서 메시지 간격을 바꾸는 옵션도 있으면 좋겠어요.',85),seed('do','메시지 밀도 옵션을 추가하면 화면 크기마다 정보량을 맞추기 좋겠네요.',69,{reactions:{'💡':['mina','seo']}})],
+'design:talk':[seed('mina','다크 UI에서 모든 요소를 강조하지 않는 게 중요해요. 의미 있는 상태에만 대비를 높여요.',150),seed('seo','인터랙션은 깔끔하게, 시각적 위계는 확실하게. 그 두 가지가 핵심입니다.',130,{reactions:{'✨':['mina']}})],
+'design:showcase':[seed('seo','컴포넌트 갤러리 새 버전을 올렸습니다.',30,{embed:{title:'Forma · Component Library',desc:'버튼 / 스위치 / 다이얼로그 / 드롭다운 / 입력 상태 가이드',tags:['UI Kit','v1.2']}})],
+'design:feedback':[seed('mina','모바일 채팅 작성 영역에서 터치 영역은 충분히 크게 잡아 주세요.',45)],
+'dev:dev-general':[seed('do','오늘은 채널 데이터 모델과 메시지 반응을 분리해서 구현했어요.',25),seed('jun','메시지 검색도 키보드로 열리나요?',15)],
+'dev:frontend':[seed('do','`CSS variables`와 공통 상태 토큰을 쓰면 다른 프로젝트로 옮기기 편합니다.',50)],
+'dev:backend':[seed('bot','서버·인증·메시지 동기화 API는 현재 연결되지 않았습니다. 이 화면은 프론트엔드 동작 데모입니다.',40)],
+'dev:review':[seed('seo','기능을 완성한 뒤에는 접근성·키보드 조작·모바일 레이아웃도 같이 확인해요.',29)],
+'dm:seo':[seed('seo','내일 UI 리뷰할까요? 새로운 채팅 레이아웃이 꽤 깔끔해졌어요.',68),seed('me','네! 컴포넌트별 상호작용도 같이 확인해 보죠.',38)],
+'dm:do':[seed('do','필요한 기능 있으면 알려주세요. 데모로 바로 추가해 보겠습니다.',38)],
+'dm:mina':[seed('mina','아이콘 배치에 대한 피드백이 있으면 편하게 남겨주세요.',21)]
+};
+const storedSettings=(()=>{try{return JSON.parse(localStorage.getItem('forma-connect-v1-settings')||'{}')}catch{return{}}})();
+const settings={compact:false,lowMotion:false,clock:true,typing:true,autoReply:false,toasts:true,members:true,...storedSettings};
+const savedMsgs=(()=>{try{return JSON.parse(localStorage.getItem('forma-connect-v1-local-messages')||'{}')}catch{return{}}})();
+for(const [key,list] of Object.entries(savedMsgs)){if(Array.isArray(list)&&list.length&&list.length<250)msgs[key]=list}
+const state={servers:initialServers,server:'forma',channel:'general',mode:'channel',dm:'seo',voice:null,mute:false,deaf:false,replyId:null,editingId:null,pendingFile:null,selectedEmojiTarget:null,unreads:{'forma:notice':1},searchQuery:'',membersShown:settings.members,modal:null,modalReturnFocus:null,inboxRead:false,draftBeforeEdit:'',thread:null};
+const currentServer=()=>state.servers.find(s=>s.id===state.server)||state.servers[0];
+const getChannel=(server=state.server,channel=state.channel)=>{const s=state.servers.find(x=>x.id===server);return s?.groups.flatMap(g=>g.channels.map(c=>({...c,type:g.type}))).find(c=>c.id===channel)};
+const currentKey=()=>state.mode==='dm'?'dm:'+state.dm:state.server+':'+state.channel;
+const currentMessages=()=>msgs[currentKey()]||(msgs[currentKey()]=[]);
+const storeSettings=()=>{try{localStorage.setItem('forma-connect-v1-settings',JSON.stringify(settings))}catch{}};
+const storeMessages=()=>{try{const safe={};for(const [key,list] of Object.entries(msgs))safe[key]=list.map(m=>({...m,attachment:m.attachment?{name:m.attachment.name,size:m.attachment.size,image:false}:null}));localStorage.setItem('forma-connect-v1-local-messages',JSON.stringify(safe))}catch{}};
+const userAvatar=(id,classes='')=>{const u=users[id]||users.bot;return '<span class="avatar '+classes+' '+(u.status==='offline'?'offline':u.status==='away'?'away':'')+'" style="background:'+esc(u.color)+'">'+esc(u.initial)+'</span>'};
+const renderRich=t=>{let s=esc(t);return s.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>').replace(/`([^`\n]+)`/g,'<code>$1</code>')};
+function showToast(title,desc=''){if(!settings.toasts)return;const el=document.createElement('div');el.className='toast';el.innerHTML=ic('check-circle')+'<div><b>'+esc(title)+'</b><small>'+esc(desc)+'</small></div><button type="button" aria-label="알림 닫기">'+ic('x','tiny')+'</button>';$('#toastViewport').prepend(el);let t=setTimeout(close,4300);function close(){clearTimeout(t);if(el.isConnected)el.remove()}el.querySelector('button').onclick=close;el.onmouseenter=()=>clearTimeout(t);el.onmouseleave=()=>t=setTimeout(close,1800)}
+function modal({title,subtitle='',eyebrow='FORMA / DIALOG',body='',footer='',wide=false,onOpen=null}){state.modalReturnFocus=document.activeElement;state.modal={title};$('#modalTitle').textContent=title;$('#modalSubtitle').textContent=subtitle;$('#modalEyebrow').textContent=eyebrow;$('#modalBody').innerHTML=body;$('#modalFoot').innerHTML=footer||'<button class="btn primary" data-action="close-modal">닫기</button>';$('#dialog').classList.toggle('wide',wide);$('#overlay').classList.add('open');$('#overlay').setAttribute('aria-hidden','false');document.body.style.overflow='hidden';if(typeof onOpen==='function')onOpen();setTimeout(()=>{const field=$('input:not([type="checkbox"]),textarea,button',$('#modalBody'));(field||$('.dialog-foot .btn')||$('#dialog .icon-btn'))?.focus()},45)}
+function closeModal(){if(!state.modal)return;state.modal=null;$('#overlay').classList.remove('open');$('#overlay').setAttribute('aria-hidden','true');document.body.style.overflow='';if(state.modalReturnFocus?.isConnected)state.modalReturnFocus.focus()}
+function confirmDialog(title,description,buttonText,onConfirm,danger=false){modal({title,subtitle:description,eyebrow:'CONFIRM ACTION / LOCAL DEMO',body:'<div class="soft-note">'+ic('shield')+'이 조작은 로컬 데모 화면의 상태만 변경합니다.</div>',footer:'<button class="btn" data-action="close-modal">취소</button><button class="btn '+(danger?'danger':'primary')+'" id="confirmAction">'+esc(buttonText)+'</button>',onOpen:()=>{$('#confirmAction').onclick=()=>{closeModal();onConfirm()}}})}
+function renderServers(){const root=$('#serverList');root.innerHTML=state.servers.map(s=>'<button class="server-item '+(state.mode==='channel'&&state.server===s.id?'active':'')+'" data-server="'+esc(s.id)+'" title="'+esc(s.name)+'" aria-label="'+esc(s.name)+'">'+esc(s.abbr)+'</button>').join('');}
+function renderChannels(){const s=currentServer();$('#workspaceTag').textContent=state.mode==='dm'?'FORMA / DIRECT MESSAGES':'FORMA / WORKSPACE';$('#workspaceName').textContent=state.mode==='dm'?'다이렉트 메시지':s.name;$('#workspaceSub').textContent=state.mode==='dm'?'친구 및 개인 대화':s.subtitle;let filter=$('#channelFilter').value.toLowerCase().trim();let html='';if(state.mode==='dm'){
+html='<div class="nav-section"><div class="nav-section-head"><span class="section-label">DIRECT MESSAGES</span><button class="icon-btn" data-action="new-dm" title="DM 시작" aria-label="DM 시작">'+ic('plus')+'</button></div>';
+html+=['seo','do','mina'].filter(id=>users[id].name.toLowerCase().includes(filter)).map(id=>'<button class="channel-item '+(state.dm===id?'active':'')+'" data-dm="'+id+'">'+userAvatar(id,'sm')+'<span class="channel-title">'+esc(users[id].name)+'</span><span class="sml">'+(users[id].status==='online'?'●':'')+'</span></button>').join('');html+='</div>';
+}else{
+html=s.groups.map((g,gi)=>{const filtered=g.channels.filter(c=>c.name.toLowerCase().includes(filter));if(!filtered.length)return '';return '<div class="nav-section"><div class="nav-section-head"><span class="section-label">'+esc(g.name)+'</span><button class="icon-btn" data-create-type="'+g.type+'" title="채널 추가" aria-label="'+esc(g.name)+' 채널 추가">'+ic('plus')+'</button></div>'+filtered.map(c=>'<button class="channel-item '+(state.channel===c.id?'active':'')+' '+(state.unreads[s.id+':'+c.id]?'unread':'')+'" data-channel="'+esc(c.id)+'">'+ic(g.type==='voice'?'volume-2':'hash')+'<span class="channel-title">'+esc(c.name)+'</span>'+(state.unreads[s.id+':'+c.id]?'<span class="count">'+state.unreads[s.id+':'+c.id]+'</span>':g.type==='voice'?'<span class="sml">0/12</span>':'')+'</button>').join('')+'</div>'}).join('');}
+$('#channelNav').innerHTML=html||'<p class="message-empty">일치하는 채널이 없습니다.</p>';renderServers()}
+function renderMembers(){let online=['me','seo','do','jun','bot'],away=['mina'],offline=['hay'];const row=(id)=>{const u=users[id];return '<button class="member-row '+(u.status==='offline'?'offline':'')+'" data-user="'+id+'">'+userAvatar(id,'sm')+'<span class="member-meta"><b>'+esc(u.name)+'</b><small>'+esc(u.status==='online'?'온라인':u.status==='away'?'자리 비움':'오프라인')+'</small></span><span class="member-role">'+esc(u.role)+'</span></button>'};$('#memberList').innerHTML='<div class="members-subhead">ONLINE — '+online.length+'</div>'+online.map(row).join('')+'<div class="members-subhead">AWAY — 1</div>'+away.map(row).join('')+'<div class="members-subhead">OFFLINE — 1</div>'+offline.map(row).join('')}
+function setHeader(){const channel=state.mode==='dm'?null:getChannel();const name=state.mode==='dm'?users[state.dm]?.name:channel?.name||'알 수 없는 채널';$('#headerIcon').innerHTML=ic(state.mode==='dm'?'message-circle':channel?.type==='voice'?'volume-2':'hash');$('#headerTitle').textContent=name||'개인 채팅';$('#headerSubtitle').textContent=state.mode==='dm'?'다이렉트 메시지 · 개인 대화':channel?.desc||'커뮤니티 채널';$('#messageInput').placeholder=(state.mode==='dm'?'@':'#')+name+' 에 메시지 보내기';$('#bottomDms').classList.toggle('active',state.mode==='dm');$('#bottomChat').classList.toggle('active',state.mode==='channel');$('#membersToggle').classList.toggle('active',state.membersShown);$('#app').classList.toggle('members-hidden',!state.membersShown);}
+function introMarkup(){const channel=state.mode==='dm'?null:getChannel();const name=state.mode==='dm'?users[state.dm]?.name:channel?.name;return '<section class="channel-intro"><div class="big-channel-icon">'+ic(state.mode==='dm'?'message-circle':'hash')+'</div><h2>'+(state.mode==='dm'?'@':'#')+esc(name)+'</h2><p>'+(state.mode==='dm'?'여기부터 '+esc(name)+' 님과의 개인 대화가 시작됩니다.':esc(channel?.desc||'새 채널에서 대화를 시작해보세요.'))+'</p><div class="intro-footer">'+(state.mode==='dm'?'DIRECT MESSAGE':'FORMA CONNECT / '+esc(currentServer().name.toUpperCase()))+' · LOCAL UI DEMO</div></section><div class="date-divider">오늘</div>'}
+function renderPoll(p,m){const total=p.votes.reduce((a,b)=>a+b,0);return '<div class="poll"><strong>'+esc(p.question)+'</strong><p>한 가지 항목을 선택할 수 있습니다 · 투표는 이 브라우저에만 저장됩니다.</p>'+p.options.map((o,i)=>'<button type="button" class="poll-option '+(p.voters?.me===i?'voted':'')+'" data-poll="'+m.id+'" data-poll-option="'+i+'"><span class="poll-fill" style="width:'+Math.round(p.votes[i]/Math.max(1,total)*100)+'%"></span><span>'+esc(o)+'</span><b>'+Math.round(p.votes[i]/Math.max(1,total)*100)+'%</b></button>').join('')+'<div class="poll-foot">'+total+'표 · 선택하면 결과가 반영됩니다</div></div>'}
+function renderMessage(m){const u=users[m.author]||users.bot;const reactions=Object.entries(m.reactions||{}).map(([emo,ids])=>'<button class="react '+(ids.includes('me')?'selected':'')+'" data-react="'+m.id+'" data-emoji="'+esc(emo)+'" aria-label="'+esc(emo)+' 반응 '+ids.length+'명"><span>'+esc(emo)+'</span>'+ids.length+'</button>').join('');const replyref=m.replyTo?'<div class="reply-reference"><strong>'+esc(m.replyTo)+'</strong>님에게 답장</div>':'';const embed=m.embed?'<div class="embed"><div class="embed-top">'+ic('layers','tiny')+' REFERENCE / PROJECT</div><b>'+esc(m.embed.title)+'</b><p>'+esc(m.embed.desc)+'</p><div class="embed-foot">'+m.embed.tags.map(x=>'<span>'+esc(x)+'</span>').join('')+'</div></div>':'';const a=m.attachment;const attachment=a?'<div class="attachment">'+(a.image&&a.url?'<img src="'+esc(a.url)+'" alt="첨부 이미지">':ic('file-text'))+'<div><b>'+esc(a.name)+'</b><small>'+esc(a.size||'로컬 파일')+' · 데모 첨부</small></div></div>':'';return '<article class="message '+(m.author==='me'?'own':'')+'" id="msg-'+esc(m.id)+'" data-message-id="'+esc(m.id)+'">'+userAvatar(m.author)+'<div class="message-body">'+replyref+'<div class="message-head"><button class="author" data-user="'+esc(m.author)+'">'+esc(u.name)+'</button>'+(u.role==='OWNER'||u.role==='BOT'?'<span class="role-chip">'+esc(u.role)+'</span>':'')+(m.pinned?'<span title="고정된 메시지" style="color:#c2c3c6">'+ic('pin','tiny')+'</span>':'')+'<time class="message-time" title="'+esc(new Date(m.time).toLocaleString('ko-KR'))+'">'+(settings.clock?formatTime(m.time):'')+'</time></div><div class="message-text">'+renderRich(m.text)+'</div>'+embed+attachment+(m.poll?renderPoll(m.poll,m):'')+((reactions||true)?'<div class="reactions">'+reactions+'<button class="react add-react" data-reaction-menu="'+esc(m.id)+'" title="반응 추가" aria-label="이모지 반응 추가">'+ic('smile','tiny')+'</button>'+(m.replies?.length?'<button class="react" data-thread="'+esc(m.id)+'">'+ic('message-circle','tiny')+' '+m.replies.length+'개 답글</button>':'')+'</div>':'')+'</div><div class="msg-toolbar"><button class="icon-btn" data-reaction-menu="'+esc(m.id)+'" title="반응" aria-label="반응">'+ic('smile')+'</button><button class="icon-btn" data-reply="'+esc(m.id)+'" title="답장" aria-label="답장">'+ic('corner-up-left')+'</button><button class="icon-btn" data-thread="'+esc(m.id)+'" title="스레드" aria-label="스레드">'+ic('message-circle')+'</button><button class="icon-btn" data-message-menu="'+esc(m.id)+'" title="메시지 작업" aria-label="메시지 작업">'+ic('more-horizontal')+'</button></div></article>'}
+function renderMessages({keep=false}={}){if(state.mode==='channel'&&getChannel()?.type==='voice'){renderVoiceStage();return}$('#voiceStage').hidden=true;$('#chatScroll').hidden=false;$('#composerWrap').hidden=false;const view=$('#chatScroll'),oldTop=view.scrollTop,oldHeight=view.scrollHeight,nearBottom=(oldHeight-view.clientHeight-oldTop)<140;const list=currentMessages();view.innerHTML=introMarkup()+(list.length?list.map(renderMessage).join(''):'<p class="message-empty">아직 메시지가 없습니다. 첫 대화를 시작해 보세요.</p>');if(keep&&!nearBottom)view.scrollTop=oldTop;else view.scrollTop=view.scrollHeight;setHeader();renderTyping()}
+function renderTyping(){const el=$('#typingLine');el.innerHTML=settings.typing&&state.mode==='channel'?'<span class="typing-bubbles"><i></i><i></i><i></i></span><span>'+esc(users.do.name)+'님이 작업 공간을 살펴보고 있어요 · 데모</span>':''}
+function changeChannel(id){if(!getChannel(state.server,id))return;state.mode='channel';state.channel=id;state.replyId=null;state.editingId=null;state.unreads[state.server+':'+id]=0;resetComposerState();renderChannels();renderMessages();closeMenu()}
+function changeServer(id){const s=state.servers.find(x=>x.id===id);if(!s)return;state.server=id;state.mode='channel';state.channel=s.groups.flatMap(g=>g.channels).find(c=>s.groups.find(g=>g.channels.includes(c))?.type==='text')?.id||s.groups[0]?.channels[0]?.id;$('#channelFilter').value='';resetComposerState();renderChannels();renderMessages();closeMenu();showToast(s.name,'서버가 전환되었습니다.')}
+function changeDm(id){if(!users[id])return;state.mode='dm';state.dm=id;state.replyId=null;state.editingId=null;resetComposerState();renderChannels();renderMessages();closeMenu()}
+function showDmHome(){state.mode='dm';state.dm=state.dm||'seo';$('#channelFilter').value='';renderChannels();renderMessages();closeMenu()}
+function closeMenu(){$('#app').classList.remove('menu-open')}
+function resetComposerState(){state.replyId=null;state.editingId=null;state.pendingFile=null;$('#replying').classList.remove('visible');$('#attachmentPreview').classList.remove('visible');$('#messageInput').value='';autoTextarea()}
+function autoTextarea(){let el=$('#messageInput');el.style.height='auto';el.style.height=Math.min(el.scrollHeight,170)+'px'}
+function startReply(id){const m=currentMessages().find(x=>x.id===id);if(!m)return;state.replyId=id;state.editingId=null;$('#replying').classList.add('visible');$('#replyingText').innerHTML='<strong>'+esc(users[m.author]?.name||'멤버')+'</strong> 님에게 답장';$('#messageInput').focus()}
+function startEdit(id){const m=currentMessages().find(x=>x.id===id);if(!m||m.author!=='me')return;state.editingId=id;state.replyId=null;$('#replying').classList.add('visible');$('#replyingText').innerHTML='<strong>메시지 편집 중</strong> · Esc로 취소';$('#messageInput').value=m.text;autoTextarea();$('#messageInput').focus()}
+function sendMessage(){let value=$('#messageInput').value.trim();if(state.editingId){const m=currentMessages().find(x=>x.id===state.editingId);if(m){if(value){m.text=value;m.edited=true;storeMessages();showToast('메시지 수정','변경 내용이 적용됐습니다.')}else showToast('내용이 비어 있습니다','메시지를 입력하세요.')}resetComposerState();renderMessages({keep:true});return}if(!value&&!state.pendingFile){$('#messageInput').focus();return}if(value.startsWith('/')){const key=value.split(' ')[0];if(key==='/help'){resetComposerState();showHelp();return}if(key==='/clear'){resetComposerState();confirmDialog('현재 채널의 데모 메시지 삭제','이 채널의 로컬 메시지를 비웁니다.','메시지 비우기',()=>{msgs[currentKey()]=[];storeMessages();renderMessages();showToast('채널 초기화','현재 채널의 메시지를 지웠습니다.')},true);return}if(key==='/shrug')value=value.slice(6).trim()+' ¯\\_(ツ)_/¯';if(key==='/poll'){resetComposerState();openPollCreator();return}}
+const m=seed('me',value,0);if(state.replyId){const original=currentMessages().find(x=>x.id===state.replyId);m.replyTo=users[original?.author]?.name||'멤버'}if(state.pendingFile){m.attachment={...state.pendingFile}}currentMessages().push(m);storeMessages();resetComposerState();renderMessages();showToast('메시지 전송','로컬 데모 채널에 추가했습니다.');if(settings.autoReply&&state.mode==='channel'){const key=currentKey();setTimeout(()=>{const reply=seed('bot','메시지가 도착했어요. 현재 이 채팅은 브라우저 내 시뮬레이션입니다.',0,{replyTo:'Jump'});(msgs[key]||(msgs[key]=[])).push(reply);storeMessages();if(currentKey()===key)renderMessages({keep:true});else state.unreads[key]=(state.unreads[key]||0)+1;renderChannels()},1800)}}
+function reactMessage(id,emoji){const m=currentMessages().find(x=>x.id===id);if(!m)return;const list=(m.reactions||(m.reactions={}))[emoji]||(m.reactions[emoji]=[]);let i=list.indexOf('me');if(i>=0)list.splice(i,1);else list.push('me');if(!list.length)delete m.reactions[emoji];storeMessages();renderMessages({keep:true})}
+function vote(id,index){const m=currentMessages().find(x=>x.id===id);if(!m?.poll)return;const p=m.poll;if(p.voters?.me!=null){if(p.voters.me===index)return;p.votes[p.voters.me]=Math.max(0,p.votes[p.voters.me]-1)}p.voters=p.voters||{};p.voters.me=index;p.votes[index]++;storeMessages();renderMessages({keep:true});showToast('투표 반영','선택한 항목에 투표했습니다.')}
+function openEmojiPicker(messageId=null){const emojis=['👍','❤️','😂','🔥','✨','👀','✅','🎉','💡','🚀','😊','🙌','👋','🎨','💻','⭐','🤔','👏','💬','😎','📌','⚡','🌙','🖤','💯','🥳','🤝','📣','🎧','🛠️','☕','🫶'];modal({title:messageId?'메시지 반응':'이모지 선택',subtitle:'선택한 이모지는 바로 적용됩니다.',eyebrow:'EMOJI / QUICK PICKER',body:'<div class="emoji-grid">'+emojis.map(e=>'<button type="button" data-pick-emoji="'+esc(e)+'" aria-label="'+esc(e)+'">'+esc(e)+'</button>').join('')+'</div>',footer:'<button class="btn" data-action="close-modal">취소</button>',onOpen:()=>{$$('[data-pick-emoji]').forEach(b=>b.onclick=()=>{const e=b.dataset.pickEmoji;closeModal();if(messageId)reactMessage(messageId,e);else{$('#messageInput').value+=e;autoTextarea();$('#messageInput').focus()}})}})}
+function messageMenu(id){const m=currentMessages().find(x=>x.id===id);if(!m)return;const own=m.author==='me';modal({title:'메시지 작업',subtitle:'메시지별 작업을 선택하세요.',eyebrow:'MESSAGE / ACTIONS',body:'<div class="choice-stack">'+[
+{act:'reply',ic:'corner-up-left',name:'답장하기',desc:'작성 영역에서 해당 메시지를 인용합니다.'},{act:'thread',ic:'message-circle',name:'스레드 열기',desc:'메시지를 중심으로 답글을 남깁니다.'},{act:'pin',ic:'pin',name:m.pinned?'고정 해제':'메시지 고정',desc:'채널 상단에서 다시 찾을 수 있습니다.'},{act:'copy',ic:'copy',name:'내용 복사',desc:'메시지의 본문을 클립보드에 복사합니다.'},...(own?[{act:'edit',ic:'edit',name:'메시지 수정',desc:'직접 작성한 메시지만 수정합니다.'},{act:'delete',ic:'trash',name:'메시지 삭제',desc:'브라우저에 저장된 메시지를 제거합니다.'}]:[])
+].map(a=>'<button class="choice" data-msg-option="'+a.act+'">'+ic(a.ic)+'<span><strong>'+a.name+'</strong><small>'+a.desc+'</small></span>'+ic('chevron-right')+'</button>').join('')+'</div>',footer:'<button class="btn" data-action="close-modal">닫기</button>',onOpen:()=>{$$('[data-msg-option]').forEach(b=>b.onclick=()=>{closeModal();const a=b.dataset.msgOption;if(a==='reply')startReply(id);else if(a==='thread')openThread(id);else if(a==='pin'){m.pinned=!m.pinned;storeMessages();renderMessages({keep:true});showToast(m.pinned?'메시지 고정됨':'고정 해제됨')}else if(a==='copy'){safeCopy(m.text);showToast('내용 복사됨')}else if(a==='edit')startEdit(id);else if(a==='delete')confirmDialog('메시지를 삭제할까요?','삭제한 로컬 메시지는 복원할 수 없습니다.','메시지 삭제',()=>{const list=currentMessages();list.splice(list.indexOf(m),1);storeMessages();renderMessages({keep:true});showToast('메시지 삭제됨')},true)})}})}
+function openThread(id){const m=currentMessages().find(x=>x.id===id);if(!m)return;const threadReplies=(m.replies||[]).map(r=>'<div class="message" style="margin-bottom:4px">'+userAvatar(r.author,'sm')+'<div class="message-body"><div class="message-head"><b style="font-size:11px">'+esc(users[r.author]?.name||'멤버')+'</b><span class="message-time">'+formatTime(r.time)+'</span></div><div class="message-text">'+renderRich(r.text)+'</div></div></div>').join('');modal({title:'스레드',subtitle:'선택한 메시지에 달린 답글을 확인합니다.',eyebrow:'THREAD / CONVERSATION',wide:true,body:'<div style="padding:8px 0;border-bottom:1px solid #36383a;margin-bottom:14px">'+renderMessage(m).replace(/<div class="msg-toolbar">[\s\S]*?<\/div><\/article>$/,'</article>')+'</div><div id="threadReplies">'+(threadReplies||'<p class="message-empty">첫 번째 답글을 남겨보세요.</p>')+'</div><div class="field" style="margin:16px 0 0"><label for="threadInput">답글 작성</label><textarea id="threadInput" maxlength="2000" placeholder="스레드에 답글을 입력하세요..."></textarea></div>',footer:'<button class="btn" data-action="close-modal">닫기</button><button class="btn primary" id="threadSend">'+ic('send')+' 답글 보내기</button>',onOpen:()=>{function post(){const input=$('#threadInput');const val=input?.value.trim();if(!val)return;const target=currentMessages().find(x=>x.id===id);if(!target){closeModal();return}target.replies=target.replies||[];target.replies.push({id:'r'+Date.now(),author:'me',text:val,time:Date.now()});storeMessages();closeModal();renderMessages({keep:true});showToast('답글 추가됨','스레드에 메시지를 남겼습니다.')}$('#threadSend').onclick=post;$('#threadInput').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();post()}}}})}
+function pinnedDialog(){const list=currentMessages().filter(m=>m.pinned);modal({title:'고정된 메시지',subtitle:'중요한 내용을 빠르게 확인합니다.',eyebrow:'CHANNEL / PINNED',body:list.length?list.map(m=>'<button class="search-hit" data-jump-msg="'+m.id+'">'+userAvatar(m.author,'sm')+'<div><b>'+esc(users[m.author]?.name||'멤버')+'</b><span>'+esc(m.text).slice(0,135)+'</span></div></button>').join(''):'<div class="message-empty">아직 고정된 메시지가 없습니다.</div>',footer:'<button class="btn primary" data-action="close-modal">닫기</button>',onOpen:()=>bindJump()})}
+function bindJump(){ $$('[data-jump-msg]').forEach(b=>b.onclick=()=>{const id=b.dataset.jumpMsg;closeModal();setTimeout(()=>{const el=document.getElementById('msg-'+id);el?.scrollIntoView({block:'center',behavior:settings.lowMotion?'instant':'smooth'});if(el){el.style.background='#313339';setTimeout(()=>el.style.background='',1300)}},20)})}
+function openSearch(initial=''){modal({title:'메시지 검색',subtitle:'현재 채널의 메시지 내용을 검색합니다.',eyebrow:'SEARCH / CHANNEL',wide:true,body:'<div class="field"><label for="searchMessages">메시지, 작성자, 키워드</label><input id="searchMessages" autocomplete="off" placeholder="예: 디자인 시스템" value="'+esc(initial)+'"></div><div class="search-results" id="searchResults"></div>',footer:'<button class="btn" data-action="close-modal">닫기</button>',onOpen:()=>{const input=$('#searchMessages');input.oninput=renderHits;renderHits();function renderHits(){const q=input.value.trim().toLowerCase();const filtered=currentMessages().filter(m=>!q||m.text.toLowerCase().includes(q)||users[m.author]?.name.toLowerCase().includes(q)).slice(-50).reverse();$('#searchResults').innerHTML=filtered.length?filtered.map(m=>'<button class="search-hit" data-jump-msg="'+m.id+'">'+userAvatar(m.author,'sm')+'<div><b>'+esc(users[m.author]?.name||'멤버')+' <small style="color:#898c92">'+formatTime(m.time)+'</small></b><span>'+esc(m.text).slice(0,210)+'</span></div></button>').join(''):'<p class="message-empty">일치하는 메시지가 없습니다.</p>';bindJump()}}})}
+function quickNavigate(){const items=[];state.servers.forEach(s=>s.groups.forEach(g=>g.channels.forEach(c=>items.push({key:s.id+':'+c.id,label:s.name+' / '+c.name,icon:g.type==='voice'?'volume-2':'hash',run:()=>{state.server=s.id;changeChannel(c.id)}}))));['seo','do','mina'].forEach(id=>items.push({key:'dm:'+id,label:'DM / '+users[id].name,icon:'message-circle',run:()=>changeDm(id)}));items.push({key:'action:settings',label:'설정 열기',icon:'settings',run:openSettings},{key:'action:search',label:'채널 검색',icon:'search',run:openSearch});modal({title:'빠른 이동',subtitle:'채널·사람·명령을 검색하세요. Ctrl + K',eyebrow:'COMMAND / PALETTE',wide:true,body:'<div class="field"><input id="quickQuery" placeholder="채널 이름을 입력하세요..." autocomplete="off"></div><div id="quickResults" class="quick-results"></div>',footer:'<button class="btn" data-action="close-modal">취소</button>',onOpen:()=>{const input=$('#quickQuery');input.oninput=update;input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('#quickResults button')?.click()}};function update(){const q=input.value.toLowerCase().trim();const found=items.filter(x=>x.label.toLowerCase().includes(q)).slice(0,9);$('#quickResults').innerHTML=found.map(i=>'<button class="quick-row" data-quick="'+esc(i.key)+'">'+ic(i.icon)+'<span>'+esc(i.label)+'</span>'+ic('chevron-right','tiny')+'</button>').join('')||'<p class="message-empty">검색 결과가 없습니다.</p>';$$('[data-quick]').forEach(b=>b.onclick=()=>{const item=items.find(x=>x.key===b.dataset.quick);closeModal();item?.run()})}update()}})}
+function openProfile(id){const u=users[id];if(!u)return;modal({title:'사용자 프로필',subtitle:'프로필과 상태를 확인합니다.',eyebrow:'USER / PROFILE',body:'<div class="profile-cover"></div><div class="profile-identity">'+userAvatar(id,'lg')+'<div><h3>'+esc(u.name)+'</h3><small>'+esc(u.role)+' · '+(u.status==='online'?'온라인':u.status==='away'?'자리 비움':'오프라인')+'</small></div></div><div class="profile-roles"><span>'+esc(u.role)+'</span><span>Forma Connect</span><span>LOCAL DEMO</span></div><p class="profile-desc">'+esc(u.bio)+'</p><div class="soft-note">'+ic('shield')+'표시되는 프로필과 접속 상태는 예시 데이터이며 실제 사용자와 연결되지 않습니다.</div>',footer:'<button class="btn" data-action="close-modal">닫기</button>'+(id==='me'?'<button class="btn primary" id="profileSettings">설정 열기</button>':'<button class="btn primary" id="profileDM">'+ic('message-circle')+' DM 보내기</button>'),onOpen:()=>{if(id==='me')$('#profileSettings').onclick=()=>{closeModal();openSettings()};else $('#profileDM').onclick=()=>{closeModal();changeDm(id)}}})}
+function createChannel(type='text'){const s=currentServer();modal({title:'새 채널 만들기',subtitle:s.name+'에 채널을 추가합니다.',eyebrow:'WORKSPACE / CREATE CHANNEL',body:'<div class="field"><label for="newChannelName">채널 이름</label><input id="newChannelName" maxlength="32" placeholder="예: 신규 프로젝트" autocomplete="off"><small class="help">띄어쓰기는 자동으로 하이픈으로 바뀝니다.</small></div><div class="field"><label for="newChannelType">채널 유형</label><select id="newChannelType"><option value="text" '+(type==='text'?'selected':'')+'>텍스트 채널</option><option value="voice" '+(type==='voice'?'selected':'')+'>음성 채널</option></select></div><div class="field"><label for="newChannelDesc">채널 설명 (선택)</label><input id="newChannelDesc" maxlength="100" placeholder="이 채널은 무엇을 위한 공간인가요?"></div><div id="channelError" style="color:#d3a5a5;font-size:10px"></div>',footer:'<button class="btn" data-action="close-modal">취소</button><button class="btn primary" id="submitChannel">채널 만들기</button>',onOpen:()=>{$('#submitChannel').onclick=()=>{const name=$('#newChannelName').value.trim().replace(/\s+/g,'-');const kind=$('#newChannelType').value;const desc=$('#newChannelDesc').value.trim();if(name.length<2){$('#channelError').textContent='채널 이름을 2자 이상 입력하세요.';return}const id='custom-'+Date.now();let group=s.groups.find(g=>g.type===kind);if(!group){group={name:kind==='text'?'TEXT CHANNELS':'VOICE CHANNELS',type:kind,channels:[]};s.groups.push(group)}group.channels.push({id,name,desc:desc||'새로 만든 채널'});closeModal();changeChannel(id);showToast('채널 생성 완료','#'+name+' 채널이 추가됐습니다.')}}})}
+function createServer(){modal({title:'새 서버 만들기',subtitle:'새로운 커뮤니티 공간을 구성합니다.',eyebrow:'COMMUNITY / NEW SERVER',body:'<div class="field"><label for="newServerName">서버 이름</label><input id="newServerName" maxlength="30" placeholder="예: 우리 작업실"></div><div class="field"><label for="newServerDescription">서버 소개 (선택)</label><input id="newServerDescription" maxlength="80" placeholder="함께 만드는 커뮤니티"></div><p id="serverError" style="color:#d3a5a5;font-size:10px"></p><div class="soft-note">'+ic('layers')+'생성한 서버는 현재 브라우저 세션에서만 유지됩니다.</div>',footer:'<button class="btn" data-action="close-modal">취소</button><button class="btn primary" id="submitServer">서버 만들기</button>',onOpen:()=>{$('#submitServer').onclick=()=>{const name=$('#newServerName').value.trim();if(name.length<2){$('#serverError').textContent='서버 이름을 2자 이상 입력해 주세요.';return}const id='srv-'+Date.now();state.servers.push({id,name,abbr:name.slice(0,2),subtitle:$('#newServerDescription').value.trim()||'새로 만든 커뮤니티',groups:[{name:'TEXT CHANNELS',type:'text',channels:[{id:'general',name:'일반',desc:'서버의 기본 채팅 채널'}]},{name:'VOICE CHANNELS',type:'voice',channels:[{id:'lounge',name:'라운지',desc:'자유로운 음성 공간'}]}]});closeModal();changeServer(id);showToast('서버 생성 완료',name+' 서버가 만들어졌습니다.')}}})}
+const permissionRoles={owner:{name:'Owner',manage:true,channels:true,moderate:true,invite:true,voice:true},admin:{name:'Admin',manage:false,channels:true,moderate:true,invite:true,voice:true},member:{name:'Member',manage:false,channels:false,moderate:false,invite:true,voice:true},guest:{name:'Guest',manage:false,channels:false,moderate:false,invite:false,voice:true}};
+function openRoles(){
+ const headers=[['manage','서버 관리'],['channels','채널 만들기'],['moderate','메시지 관리'],['invite','초대 링크'],['voice','음성 참여']];
+ const body='<p style="font-size:11px;color:#8d9196;margin-bottom:14px">서버 역할에 따라 접근 범위를 제어하는 UI 시뮬레이션입니다. Owner는 전체 권한이 고정됩니다.</p><div style="overflow:auto;border:1px solid #3b3d41;border-radius:9px"><table style="width:100%;border-collapse:collapse;font-size:11px;min-width:510px"><thead><tr style="background:#222426"><th style="padding:12px;text-align:left">권한</th>'+Object.values(permissionRoles).map(r=>'<th style="padding:12px;text-align:center">'+r.name+'</th>').join('')+'</tr></thead><tbody>'+headers.map(([key,label])=>'<tr style="border-top:1px solid #34363a"><td style="padding:10px 12px;color:#bec0c5">'+label+'</td>'+Object.entries(permissionRoles).map(([role,r])=>'<td style="text-align:center;padding:10px"><label class="switch" style="display:inline-block"><input type="checkbox" data-role-perm="'+role+'" data-perm="'+key+'" '+(r[key]?'checked':'')+' '+(role==='owner'?'disabled':'')+'><span></span></label></td>').join('')+'</tr>').join('')+'</tbody></table></div><div class="soft-note">'+ic('shield')+'변경 사항은 UI 데모에만 반영됩니다. 실제 서버 접근 제어에는 백엔드에서 모든 권한을 검증해야 합니다.</div>';
+ modal({title:'역할 및 권한',subtitle:'서버 역할과 접근 수준을 세밀하게 구성합니다.',eyebrow:'SERVER / ROLE PERMISSIONS',wide:true,body,footer:'<button class="btn" id="resetRoles">기본값</button><button class="btn primary" data-action="close-modal">완료</button>',onOpen:()=>{$$('[data-role-perm]').forEach(e=>e.onchange=()=>{permissionRoles[e.dataset.role][e.dataset.perm]=e.checked;showToast('권한 변경',permissionRoles[e.dataset.role].name+' · UI에 적용됨')});$('#resetRoles').onclick=()=>{Object.assign(permissionRoles.member,{manage:false,channels:false,moderate:false,invite:true,voice:true});Object.assign(permissionRoles.guest,{manage:false,channels:false,moderate:false,invite:false,voice:true});Object.assign(permissionRoles.admin,{manage:false,channels:true,moderate:true,invite:true,voice:true});closeModal();openRoles()}}})
+}
+function workspaceMenu(){modal({title:state.mode==='dm'?'다이렉트 메시지':'서버 관리',subtitle:'워크스페이스의 주요 작업을 수행합니다.',eyebrow:'WORKSPACE / ACTIONS',body:'<div class="choice-stack">'+[{id:'invite',icon:'user-plus',t:'친구 초대',d:'데모 초대 링크를 복사합니다.'},{id:'create-channel',icon:'plus-circle',t:'채널 만들기',d:'텍스트 또는 음성 채널 추가'},{id:'create-server',icon:'layers',t:'새 서버 만들기',d:'다른 작업 공간 만들기'},{id:'roles',icon:'shield',t:'역할 · 권한 관리',d:'Owner / Admin / Member / Guest 권한 수정'},{id:'settings',icon:'settings',t:'개인 설정',d:'화면·알림·입력 동작 변경'}].map(o=>'<button class="choice" data-workspace-act="'+o.id+'">'+ic(o.icon)+'<span><strong>'+o.t+'</strong><small>'+o.d+'</small></span>'+ic('chevron-right')+'</button>').join('')+'</div>',footer:'<button class="btn" data-action="close-modal">닫기</button>',onOpen:()=>{$$('[data-workspace-act]').forEach(b=>b.onclick=()=>{const a=b.dataset.workspaceAct;closeModal();if(a==='invite')inviteDialog();if(a==='create-channel')createChannel();if(a==='create-server')createServer();if(a==='roles')openRoles();if(a==='settings')openSettings()})}})}
+function inviteDialog(){const link=location.protocol==='file:'?'forma-connect://invite/demo':location.href.split('#')[0]+'#invite='+state.server;modal({title:'서버에 친구 초대',subtitle:'Forma Connect의 초대 UI를 미리 체험합니다.',eyebrow:'INVITE / DEMONSTRATION',body:'<div class="field"><label>초대 링크 (데모)</label><input id="inviteLink" readonly value="'+esc(link)+'"></div><div class="soft-note">'+ic('shield')+'현재 링크는 서버 인증 기능이 없는 데모 URL이며, 다른 사람의 계정을 실제로 초대하지 않습니다.</div>',footer:'<button class="btn" data-action="close-modal">닫기</button><button class="btn primary" id="copyInvite">'+ic('copy')+' 링크 복사</button>',onOpen:()=>{$('#copyInvite').onclick=()=>{safeCopy(link);showToast('초대 링크 복사됨','실제 서버 가입 기능은 연결되지 않았습니다.')}}})}
+function showHelp(){modal({title:'Forma Connect 사용법',subtitle:'사용할 수 있는 데모 기능과 단축키를 확인하세요.',eyebrow:'HELP / SHORTCUTS',body:'<div class="choice-stack">'+[['Enter','메시지 전송'],['Shift + Enter','줄바꿈'],['Ctrl / ⌘ + K','빠른 이동'],['Ctrl / ⌘ + F','메시지 검색'],['Esc','모달 닫기 / 편집 취소'],['/help','채팅에서 도움말'],['/poll','채팅에서 투표 생성'],['/clear','현재 채널 메시지 초기화']].map(([k,v])=>'<div class="settings-row"><div><b>'+esc(v)+'</b></div><code style="color:#b9bdc1;font:10px monospace">'+esc(k)+'</code></div>').join('')+'</div><div class="soft-note">'+ic('shield')+'본 페이지는 Discord와 유사한 기능을 참고한 독립 UI 프로토타입입니다. 실시간 네트워크 채팅·음성 통화·계정 인증 기능을 제공하지 않습니다.</div>',footer:'<button class="btn primary" data-action="close-modal">확인</button>'})}
+function openPollCreator(){modal({title:'투표 만들기',subtitle:'채널에 간단한 투표 메시지를 추가합니다.',eyebrow:'POLL / CREATE',body:'<div class="field"><label for="pollTitle">질문</label><input id="pollTitle" maxlength="100" placeholder="예: 가장 좋은 기능은?"></div>'+[0,1,2].map(i=>'<div class="field"><label for="pollOpt'+i+'">항목 '+(i+1)+(i===2?' (선택)':'')+'</label><input id="pollOpt'+i+'" maxlength="64" placeholder="선택지 '+(i+1)+'"></div>').join('')+'<p id="pollError" style="color:#d3a5a5;font-size:10px"></p>',footer:'<button class="btn" data-action="close-modal">취소</button><button class="btn primary" id="makePoll">투표 게시</button>',onOpen:()=>{$('#makePoll').onclick=()=>{let question=$('#pollTitle').value.trim();let options=[0,1,2].map(i=>$('#pollOpt'+i).value.trim()).filter(Boolean);if(question.length<2||options.length<2){$('#pollError').textContent='질문과 선택지를 2개 이상 입력하세요.';return}currentMessages().push(seed('me','투표를 만들어 보았습니다.',0,{poll:{question,options,votes:options.map(()=>0),voters:{}}}));storeMessages();closeModal();renderMessages();showToast('투표 게시됨','투표를 클릭해서 결과를 확인하세요.')}}})}
+function notificationsDialog(){const items=[{k:'멘션',v:'서연님이 당신을 메시지에서 언급했습니다.',t:'13분 전',icon:'at-sign'},{k:'새 공지',v:'Forma Studio · 인증 및 디자인 시스템 업데이트',t:'2시간 전',icon:'bell'},{k:'프로젝트',v:'도윤님이 컴포넌트 리뷰를 요청했습니다.',t:'어제',icon:'layers'}];modal({title:'알림 센터',subtitle:state.inboxRead?'모든 알림을 확인했습니다.':'확인하지 않은 데모 알림이 있습니다.',eyebrow:'ACTIVITY / INBOX',body:'<div class="choice-stack">'+items.map((a,i)=>'<button class="choice" data-notice="'+i+'">'+ic(a.icon)+'<span><strong>'+a.k+(state.inboxRead?'':' · 새 알림')+'</strong><small>'+a.v+' · '+a.t+'</small></span>'+ic('chevron-right')+'</button>').join('')+'</div>',footer:'<button class="btn" data-action="close-modal">닫기</button><button class="btn primary" id="markInbox">모두 읽음</button>',onOpen:()=>{$('#markInbox').onclick=()=>{state.inboxRead=true;showToast('모두 읽음 처리','알림 표시가 갱신됐습니다.');closeModal()};$$('[data-notice]').forEach(b=>b.onclick=()=>{closeModal();if(state.server!=='forma')state.server='forma';if(b.dataset.notice==='1')changeChannel('notice');else if(b.dataset.notice==='2')changeChannel('projects');else changeChannel('general')})}})}
+function openSettings(){
+const row=(key,label,sub)=>'<div class="settings-row"><div><b>'+label+'</b><small>'+sub+'</small></div><label class="switch"><input type="checkbox" data-setting="'+key+'" '+(settings[key]?'checked':'')+'><span></span></label></div>';
+const body='<div class="eyebrow" style="margin:1px 0 5px">APPEARANCE & MOTION</div>'+
+row('compact','컴팩트 모드','메시지와 채널 간격을 줄여 더 많은 내용을 표시합니다.')+
+row('lowMotion','모션 최소화','등장·전환 애니메이션을 비활성화합니다.')+
+row('clock','메시지 시간 표시','메시지별 작성 시각을 보여줍니다.')+
+'<div class="eyebrow" style="margin:20px 0 5px">CHAT & FEEDBACK</div>'+
+row('typing','입력 상태 데모','하단에 가상의 입력 중 상태를 표시합니다.')+
+row('autoReply','자동 응답 데모','전송한 메시지에 Forma Bot이 답장합니다.')+
+row('toasts','토스트 알림','수행 결과를 작은 알림으로 표시합니다.')+
+row('members','멤버 사이드바','데스크톱에서 사용자 목록을 표시합니다.')+
+'<div class="soft-note">'+ic('shield')+'설정은 로컬 브라우저 저장소에 보관되며 실제 계정 프로필과 동기화되지 않습니다.</div>';
+modal({
+ title:'사용자 설정',subtitle:'전체 화면에 적용되는 공통 환경 설정입니다.',eyebrow:'PREFERENCES / FORMA CONNECT',wide:true,body,
+ footer:'<button class="btn" id="resetPreferences">기본값 복원</button><button class="btn primary" data-action="close-modal">설정 완료</button>',
+ onOpen:()=>{
+  $$('[data-setting]').forEach(el=>{el.onchange=()=>{settings[el.dataset.setting]=el.checked;applySettings();storeSettings();showToast('설정 반영됨',el.closest('.settings-row').querySelector('b').textContent)}});
+  $('#resetPreferences').onclick=()=>{Object.assign(settings,{compact:false,lowMotion:false,clock:true,typing:true,autoReply:false,toasts:true,members:true});storeSettings();applySettings();closeModal();openSettings()};
+ }
+});
+}
+function applySettings(){document.body.classList.toggle('compact',settings.compact);document.body.classList.toggle('low-motion',settings.lowMotion);state.membersShown=settings.members;$('#app').classList.toggle('members-hidden',!state.membersShown);if(!$('#chatScroll').hidden)renderMessages({keep:true});renderTyping()}
+function joinVoice(){const c=getChannel();if(!c||c.type!=='voice')return;state.voice={server:state.server,channel:c.id};renderVoiceStage();updateVoiceFooter();showToast('음성 채널 참여',c.name+' · 연결 상태를 시뮬레이션합니다.')}
+function leaveVoice(){state.voice=null;updateVoiceFooter();renderVoiceStage();showToast('음성 연결 종료','실제 마이크·스피커 연결은 수행하지 않았습니다.')}
+function updateVoiceFooter(){const connected=!!state.voice;$('#voiceConnected').classList.toggle('visible',connected);if(connected)$('#connectedChannelName').textContent=getChannel(state.voice.server,state.voice.channel)?.name||'라운지';$('#muteButton').innerHTML=ic(state.mute?'mic-off':'mic');$('#deafenButton').innerHTML=ic(state.deaf?'headphones-off':'headphones');$('#muteButton').title=state.mute?'마이크 음소거 해제':'마이크 음소거';$('#deafenButton').title=state.deaf?'헤드폰 음소거 해제':'헤드폰 음소거'}
+function renderVoiceStage(){const c=getChannel();if(!c||c.type!=='voice'){renderMessages();return}$('#chatScroll').hidden=true;$('#composerWrap').hidden=true;$('#voiceStage').hidden=false;setHeader();const joined=!!state.voice&&state.voice.server===state.server&&state.voice.channel===state.channel;$('#voiceStage').innerHTML='<div class="voice-stage-intro"><div><div class="eyebrow">VOICE CHANNEL / LIVE PREVIEW</div><h2 style="margin:6px 0">'+esc(c.name)+'</h2><p>'+esc(c.desc)+' · 실제 WebRTC 연결 없이 음성 채널 화면을 체험합니다.</p></div><span class="pill" style="border:1px solid #4b4e51;padding:5px 10px;border-radius:99px;color:#b8bdc1;font:10px monospace">'+(joined?'CONNECTED / DEMO':'NOT CONNECTED')+'</span></div>'+(joined?'<div class="voice-grid">'+['me','seo','do','jun'].map((id,i)=>'<div class="voice-tile '+(i===1?'speaking':'')+'">'+userAvatar(id,'lg')+'<b>'+esc(users[id].name)+'</b><small>'+(id==='me'?(state.mute?'마이크 꺼짐':'마이크 켜짐'):(i===1?'말하는 중 · 데모':'대기 중'))+'</small></div>').join('')+'</div><div class="voice-controls"><button class="btn" data-action="mute">'+ic(state.mute?'mic-off':'mic')+(state.mute?'음소거 해제':'마이크 음소거')+'</button><button class="btn" data-action="deafen">'+ic(state.deaf?'headphones-off':'headphones')+(state.deaf?'듣기 켜기':'헤드폰 음소거')+'</button><button class="btn" data-action="share-screen">'+ic('monitor')+' 화면 공유</button><button class="btn danger" data-action="leave-voice">'+ic('phone-off')+' 나가기</button></div>':'<div class="voice-empty">'+ic('audio-lines')+'<h2>음성 채널 참여</h2><p>정교한 음성 채널 인터페이스를 디자인 데모로 체험해 보세요.</p><button class="btn primary" data-action="join-voice">'+ic('phone-off')+' 데모 음성 채널 참여</button></div>')+'<div class="voice-info">'+ic('shield','tiny')+' 음성 참여, 마이크, 화면 공유 버튼은 디자인 시뮬레이션입니다. 실제 음성 전송, 화면 공유, 기기 권한 요청은 실행되지 않습니다.</div>'}
+function attachFile(file){if(!file)return;if(file.size>12*1024*1024){showToast('첨부 용량 초과','데모 파일은 최대 12MB까지 선택할 수 있습니다.');return}let image=file.type.startsWith('image/');state.pendingFile={name:file.name,size:(file.size/1024).toFixed(1)+' KB',image,url:image?URL.createObjectURL(file):null};$('#attachmentPreview').classList.add('visible');$('#attachmentName').textContent=file.name+' · '+state.pendingFile.size;$('#messageInput').focus();showToast('첨부 준비됨','메시지를 전송하면 표시됩니다.')} 
+function removeAttachment(){if(state.pendingFile?.url)URL.revokeObjectURL(state.pendingFile.url);state.pendingFile=null;$('#attachmentPreview').classList.remove('visible');$('#fileInput').value=''}
+function toggleMute(){state.mute=!state.mute;updateVoiceFooter();if(getChannel()?.type==='voice')renderVoiceStage();showToast(state.mute?'마이크 음소거':'마이크 켜짐','실제 기기의 마이크 상태는 변경되지 않습니다.')}
+function toggleDeafen(){state.deaf=!state.deaf;updateVoiceFooter();if(getChannel()?.type==='voice')renderVoiceStage();showToast(state.deaf?'듣기 음소거':'듣기 활성화','실제 기기의 오디오 출력은 변경되지 않습니다.')}
+function handleAction(a){switch(a){case 'home':showDmHome();break;case 'bottom-chat':{const c=getChannel();const first=currentServer().groups.filter(g=>g.type==='text').flatMap(g=>g.channels)[0];changeChannel(c?.type==='text'?state.channel:first?.id);break;}case 'mobile-menu':$('#app').classList.toggle('menu-open');break;case 'close-modal':closeModal();break;case 'members':state.membersShown=!state.membersShown;settings.members=state.membersShown;storeSettings();$('#app').classList.toggle('members-hidden',!state.membersShown);$('#membersToggle').classList.toggle('active',state.membersShown);if(innerWidth<1020)showToast('멤버 목록','좁은 화면에서는 프로필과 서버 메뉴를 사용하세요.');break;case 'settings':openSettings();break;case 'workspace-menu':workspaceMenu();break;case 'add-server':createServer();break;case 'explore':modal({title:'서버 탐색',subtitle:'데모로 준비된 커뮤니티입니다.',eyebrow:'DISCOVER / SERVERS',body:'<div class="choice-stack">'+state.servers.map(s=>'<button class="choice" data-discover="'+s.id+'">'+ic('layers')+'<span><strong>'+esc(s.name)+'</strong><small>'+esc(s.subtitle)+'</small></span>'+ic('chevron-right')+'</button>').join('')+'</div>',onOpen:()=>{$$('[data-discover]').forEach(b=>b.onclick=()=>{closeModal();changeServer(b.dataset.discover)})}});break;case 'help':showHelp();break;case 'send':sendMessage();break;case 'cancel-reply':resetComposerState();break;case 'cancel-attachment':removeAttachment();break;case 'attach':$('#fileInput').click();break;case 'emoji':openEmojiPicker();break;case 'search':openSearch();break;case 'quick':quickNavigate();break;case 'invite':inviteDialog();break;case 'pins':pinnedDialog();break;case 'notifications':case 'inbox':notificationsDialog();break;case 'mute':toggleMute();break;case 'deafen':toggleDeafen();break;case 'join-voice':joinVoice();break;case 'leave-voice':leaveVoice();break;case 'share-screen':modal({title:'화면 공유 미리보기',subtitle:'화면 공유 UI를 시뮬레이션합니다.',eyebrow:'VOICE / SCREEN SHARE',body:'<div class="soft-note">'+ic('monitor')+' 실제 화면 캡처나 송출은 시작되지 않습니다. 운영 서비스에서는 권한 처리와 WebRTC 연결이 필요합니다.</div>',footer:'<button class="btn primary" data-action="close-modal">확인</button>'});break;case 'poll':openPollCreator();break;case 'format':modal({title:'메시지 서식',subtitle:'지원되는 텍스트 서식을 확인합니다.',body:'<div class="choice-stack"><div class="settings-row"><div><b>굵게 표시</b><small>**강조할 문구**</small></div></div><div class="settings-row"><div><b>코드 형식</b><small>`코드`</small></div></div><div class="settings-row"><div><b>줄바꿈</b><small>Shift + Enter</small></div></div></div>',footer:'<button class="btn primary" data-action="close-modal">닫기</button>'});break;case 'gif':modal({title:'GIF · 스티커',subtitle:'미디어 첨부 데모',body:'<div class="soft-note">'+ic('image')+' 외부 GIF 검색 API 대신 로컬 이미지를 첨부할 수 있습니다. 왼쪽 + 버튼을 사용하세요.</div>',footer:'<button class="btn primary" data-action="close-modal">확인</button>'});break;case 'new-dm':modal({title:'대화 시작',subtitle:'대화할 멤버를 선택하세요.',body:'<div class="choice-stack">'+['seo','do','mina','jun'].map(id=>'<button class="choice" data-new-dm="'+id+'">'+userAvatar(id,'sm')+'<span><strong>'+esc(users[id].name)+'</strong><small>'+esc(users[id].role)+' · 데모</small></span>'+ic('chevron-right')+'</button>').join('')+'</div>',onOpen:()=>{$$('[data-new-dm]').forEach(b=>b.onclick=()=>{closeModal();changeDm(b.dataset.newDm)})}});break}}
+function onClick(event){if(event.target===$('#overlay')){closeModal();return}const n=event.target.closest('[data-action],[data-server],[data-channel],[data-dm],[data-user],[data-create-type],[data-react],[data-reaction-menu],[data-message-menu],[data-reply],[data-thread],[data-poll]');if(!n)return;if(n.hasAttribute('data-server'))return changeServer(n.dataset.server);if(n.hasAttribute('data-channel'))return changeChannel(n.dataset.channel);if(n.hasAttribute('data-dm'))return changeDm(n.dataset.dm);if(n.hasAttribute('data-user'))return openProfile(n.dataset.user);if(n.hasAttribute('data-create-type'))return createChannel(n.dataset.createType);if(n.hasAttribute('data-react'))return reactMessage(n.dataset.react,n.dataset.emoji);if(n.hasAttribute('data-reaction-menu'))return openEmojiPicker(n.dataset.reactionMenu);if(n.hasAttribute('data-message-menu'))return messageMenu(n.dataset.messageMenu);if(n.hasAttribute('data-reply'))return startReply(n.dataset.reply);if(n.hasAttribute('data-thread'))return openThread(n.dataset.thread);if(n.hasAttribute('data-poll'))return vote(n.dataset.poll,Number(n.dataset.pollOption));if(n.hasAttribute('data-action'))return handleAction(n.dataset.action)}
+function init(){document.addEventListener('click',onClick);$('#menuBackdrop').onclick=closeMenu;$('#channelFilter').oninput=renderChannels;$('#messageInput').addEventListener('input',autoTextarea);$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();sendMessage()}else if(e.key==='Escape'&&(state.replyId||state.editingId)){e.preventDefault();resetComposerState()}});$('#fileInput').onchange=e=>attachFile(e.target.files?.[0]);$('#chatScroll').addEventListener('dragover',e=>e.preventDefault());$('#chatScroll').addEventListener('drop',e=>{e.preventDefault();attachFile(e.dataTransfer?.files?.[0])});document.addEventListener('keydown',e=>{const modalOpen=!!state.modal;if(e.key==='Escape'){if(modalOpen){e.preventDefault();closeModal()}else closeMenu();return}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();quickNavigate()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='f'){e.preventDefault();openSearch()}if(modalOpen&&e.key==='Tab'){const focusables=$$('button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled])',$('#dialog')).filter(el=>el.getClientRects().length);if(!focusables.length)return;const first=focusables[0],last=focusables[focusables.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});renderMembers();renderChannels();updateVoiceFooter();applySettings();renderMessages();setHeader();window.addEventListener('resize',()=>{if(innerWidth>710)closeMenu()})}
+init();
+})();
+
+  </script>
+</body>
+</html>
